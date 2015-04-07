@@ -125,7 +125,7 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
 
 	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
-		return FALSE;
+		throw new Exception(t("can't read contents of entropy file"));
 	}
 	$hash = md5($entropy_file);
 	$cipher = new Crypt_Blowfish();
@@ -133,7 +133,7 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$packed = hex2bin($passphrase);
 	$decrypted = $cipher->decrypt($packed);
 	if (($keyfile = file_get_contents($rsa_private)) === FALSE) {
-		return FALSE;
+		throw new Exception(t("can't read contents of private key file"));
 	}
 	
 	$key = new Crypt_RSA();
@@ -142,7 +142,7 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 
 	$ssh = new Net_SSH2("$machine");
 	if (!$ssh->login($remote_user, $key)) {
-	    return FALSE;
+		throw new Exception(t("can't ssh to @mac as @user", array('@mac' => $machine, '@user' => $remote_user)));
 	}
 
 	return $ssh;
