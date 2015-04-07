@@ -215,5 +215,37 @@ function _sitepuller_prepare_remote_temp($ssh, $remote_site_wrapper, $directory)
 }
 
 function sitepuller_tools_action_save_task($node) {
-	dsm('hello from sitepuller_tools_action_save_task');
+	$sitepuller_tools_message = array();
+	try {
+		dsm('hello from sitepuller_tools_action_save_task');
+		$task_wrapper = entity_metadata_wrapper('node', $node);
+		$subsites = $task_wrapper->field_sitepuller_subsites->value();
+		dsm($subsites);
+
+		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+		$remote_site = node_load($remote_site_nid);
+		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
+		$machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+
+		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+		$local_site = node_load($local_site_nid);
+		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
+
+		$local_user_nid = $task_wrapper->field_local_user->getIdentifier();
+		$local_user = node_load($local_user_nid);
+
+		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user, $local_user);
+		$sitepuller_tools_message[] = t("got ssh connection");
+
+		if ($task_wrapper->field_sitepuller_pull_database->value()) {}
+
+		dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
+	}
+	catch (Exception $e) {
+		$sitepuller_tools_message[] = $e->getMessage();
+		return array (
+			'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
+			);
+	}
 }
