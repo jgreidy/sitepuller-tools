@@ -40,41 +40,31 @@ function sitepuller_tools_rules_action_info() {
 
 function sitepuller_tools_action_save_user($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
-	$rsa_private = $wrapper->field_sitepuller_tools_rsa_private_key->value();
-	dsm($rsa_private);
-	$passphrase = $wrapper->field_sitepuller_tools_rsa_passphrase->value();
-	dsm($passphrase);
-	$entropy = $wrapper->field_sitepuller_tools_encrypt_entropy->value();
+	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
+	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
+	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
 
 	$sitepuller_tools_message = array();
 	// be sure the private key file exists
 	if (!file_exists($rsa_private)) {
 		$sitepuller_tools_message[] = t("can't find private key @key", array('@key' => $rsa_private));
-		dsm('no private key');
 	}
 
 	// be sure key file exists
-	if (file_exists($key_file)) {
-		$hash = md5(file_get_contents($entropy));
+	if (file_exists($entropy)) {
+		$hash = sha1(file_get_contents($entropy));	// returns 40 character hex
 		$cipher = new Crypt_Blowfish();
 		// keys can range in length from 32 bits to 448 in steps of 8
-		dsm($cipher);
 		$cipher->setKey($hash);
-		dsm($cipher);
 		$encrypted = $cipher->encrypt($passphrase);
 		$unpacked = bin2hex($encrypted);
-		dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked));
-		$wrapper->field_sitepuller_tools_rsa_passphrase->set($unpacked);
+		dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
+		$wrapper->field_sitepuller_rsa_passphrase->set($unpacked);
 		$wrapper->save();
-		//$nid = $node->nid;
-		// $mynode =  node_load($nid);
-		// $wrapper2 = entity_metadata_wrapper('node', $mynode);
-		// $wrapper2->field_sitepuller_tools_rsa_passphrase->set($cipher->encrypt($passphrase));
-		// node_save($mynode);
 		$sitepuller_tools_message[] = t("Stored encrypted passphrase.");
 	}
 	else {
-		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $key_file));
+		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $entropy));
 	}
 
 	dsm (array('final:',$sitepuller_tools_message));
@@ -94,9 +84,9 @@ function sitepuller_tools_action_save_user($node) {
  */
 function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$wrapper = entity_metadata_wrapper('node', $user_node);
-	$rsa_private = $wrapper->field_sitepuller_tools_rsa_private_key->value();
-	$passphrase = $wrapper->field_sitepuller_tools_rsa_passphrase->value();
-	$entropy = $wrapper->field_sitepuller_tools_encrypt_entropy->value();
+	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
+	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
+	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
 
 	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
 		return FALSE;
@@ -125,9 +115,9 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 function sitepuller_tools_action_check_remote_site($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
 
-	$user = $wrapper->field_sitepuller_tools_remote_user->value();
-	$mach = $wrapper->field_sitepuller_tools_remote_host->value();
-	$path = $wrapper->field_sitepuller_tools_remote_root->value();
+	$user = $wrapper->field_sitepuller_remote_user->value();
+	$mach = $wrapper->field_sitepuller_remote_host->value();
+	$path = $wrapper->field_sitepuller_remote_root->value();
 	$module = drupal_get_path('module', 'sitepuller');
 	$scripts =  drupal_realpath($module . '/sh');
 	$cmd = "/bin/bash $scripts/remote_dir_check.sh $user $mach $path";
