@@ -300,3 +300,17 @@ function _sitepuller_tools_backup_db($ssh, $site, $directory) {
 	$cmd[] = "drush sql-dump --root=$site --ordered-dump > $directory/database.sql";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
+
+function _sitepuller_tools_backup_code($ssh, $site, $directory) {
+	$cmd[] = "rsync -avcz --delete --exclude=sites/* $site/ $directory/";
+	$cmd[] = "rsync -avcz --delete $site/sites/all $directory/sites/";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+}
+
+function _sitepuller_tools_backup_subsite_public_files($ssh, $site, $directory) {
+	$cmd = "cd $site ; drush vget file_public_path";
+	$out7 = $ssh->exec($cmd);
+	$cmd = "cd $site ; drush vget file_directory_path";
+	$out6 = $ssh->exec($cmd);
+	dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6));
+}
