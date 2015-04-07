@@ -17,6 +17,28 @@ function sitepuller_tools_rules_action_info() {
 				'label' => t('The Sitepuller Remote node.'),
 				),
 			),
+			'provides' => array(
+				'sitepuller_tools_message' => array(
+					'type' => 'text',
+					'label' => t('Message'),
+					)
+				),
+		);
+	$actions['sitepuller_tools_action_check_local_site'] = array (
+		'label' => t('Sitepuller: Check remote site'),
+		'group' => t('Sitepuller'),
+		'parameter' => array(
+			'node' =>  array(
+				'type' => 'node', 
+				'label' => t('The Sitepuller Remote node.'),
+				),
+			),
+			'provides' => array(
+				'sitepuller_tools_message' => array(
+					'type' => 'text',
+					'label' => t('Message'),
+					)
+				),
 		);
 	$actions['sitepuller_tools_action_save_user'] = array (
 			'label' => t('Sitepuller: Save local user'),
@@ -25,6 +47,22 @@ function sitepuller_tools_rules_action_info() {
 				'node' => array(
 					'type' => 'node',
 					'label' => t('The Sitepuller User node.'),
+					),
+				),
+			'provides' => array(
+				'sitepuller_tools_message' => array(
+					'type' => 'text',
+					'label' => t('Message'),
+					)
+				),
+		);
+	$actions['sitepuller_tools_action_save_task'] = array (
+			'label' => t('Sitepuller: Save task'),
+			'group' => t('Sitepuller'),
+			'parameter' => array(
+				'node' => array(
+					'type' => 'node',
+					'label' => t('The Sitepuller Task node.'),
 					),
 				),
 			'provides' => array(
@@ -66,7 +104,7 @@ function sitepuller_tools_action_save_user($node) {
 	else {
 		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $entropy));
 	}
-	
+
 	return array (
 		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
 		);
@@ -155,4 +193,12 @@ $err2 = $ssh->getStdError();
 $allErr = $ssh->getErrors();
 dsm(array($pwd, $err1, $ls, $err2, $allErr));
 
+}
+
+function sitepuller_tools_action_check_local_site($node) {
+	dsm('hello from sitepuller_tools_action_check_local_site');
+}
+
+function sitepuller_tools_action_save_task($node) {
+	dsm('hello from sitepuller_tools_action_save_task');
 }
