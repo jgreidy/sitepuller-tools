@@ -7,8 +7,8 @@ include('Crypt/Blowfish.php');
 /**
  * Implement hook_rules_action_info().
  */
-function sitepuller_rules_action_info() {
-	$actions['sitepuller_action_check_remote_site'] = array (
+function sitepuller_tools_rules_action_info() {
+	$actions['sitepuller_tools_action_check_remote_site'] = array (
 		'label' => t('Sitepuller: Check remote site'),
 		'group' => t('Sitepuller'),
 		'parameter' => array(
@@ -18,7 +18,7 @@ function sitepuller_rules_action_info() {
 				),
 			),
 		);
-	$actions['sitepuller_action_save_user'] = array (
+	$actions['sitepuller_tools_action_save_user'] = array (
 			'label' => t('Sitepuller: Save local user'),
 			'group' => t('Sitepuller'),
 			'parameter' => array(
@@ -28,7 +28,7 @@ function sitepuller_rules_action_info() {
 					),
 				),
 			'provides' => array(
-				'sitepuller_message' => array(
+				'sitepuller_tools_message' => array(
 					'type' => 'text',
 					'label' => t('Message'),
 					)
@@ -38,18 +38,18 @@ function sitepuller_rules_action_info() {
 	return $actions;
 }
 
-function sitepuller_action_save_user($node) {
+function sitepuller_tools_action_save_user($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
-	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
+	$rsa_private = $wrapper->field_sitepuller_tools_rsa_private_key->value();
 	dsm($rsa_private);
-	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
+	$passphrase = $wrapper->field_sitepuller_tools_rsa_passphrase->value();
 	dsm($passphrase);
-	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
+	$entropy = $wrapper->field_sitepuller_tools_encrypt_entropy->value();
 
-	$sitepuller_message = array();
+	$sitepuller_tools_message = array();
 	// be sure the private key file exists
 	if (!file_exists($rsa_private)) {
-		$sitepuller_message[] = t("can't find private key @key", array('@key' => $rsa_private));
+		$sitepuller_tools_message[] = t("can't find private key @key", array('@key' => $rsa_private));
 		dsm('no private key');
 	}
 
@@ -64,23 +64,23 @@ function sitepuller_action_save_user($node) {
 		$encrypted = $cipher->encrypt($passphrase);
 		$unpacked = bin2hex($encrypted);
 		dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked));
-		$wrapper->field_sitepuller_rsa_passphrase->set($unpacked);
+		$wrapper->field_sitepuller_tools_rsa_passphrase->set($unpacked);
 		$wrapper->save();
 		//$nid = $node->nid;
 		// $mynode =  node_load($nid);
 		// $wrapper2 = entity_metadata_wrapper('node', $mynode);
-		// $wrapper2->field_sitepuller_rsa_passphrase->set($cipher->encrypt($passphrase));
+		// $wrapper2->field_sitepuller_tools_rsa_passphrase->set($cipher->encrypt($passphrase));
 		// node_save($mynode);
-		$sitepuller_message[] = t("Stored encrypted passphrase.");
+		$sitepuller_tools_message[] = t("Stored encrypted passphrase.");
 	}
 	else {
-		$sitepuller_message[] = t("can't find entropy file @file", array('@file' => $key_file));
+		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $key_file));
 	}
 
-	dsm (array('final:',$sitepuller_message));
+	dsm (array('final:',$sitepuller_tools_message));
 
 	return array (
-		'sitepuller_message' => implode("\r",$sitepuller_message),
+		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
 		);
 }
 
@@ -92,11 +92,11 @@ function sitepuller_action_save_user($node) {
  *
  *  returns Net_SSH2 ssh object or FALSE
  */
-function _sitepuller_get_ssh($machine, $remote_user, $user_node) {
+function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$wrapper = entity_metadata_wrapper('node', $user_node);
-	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
-	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
-	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
+	$rsa_private = $wrapper->field_sitepuller_tools_rsa_private_key->value();
+	$passphrase = $wrapper->field_sitepuller_tools_rsa_passphrase->value();
+	$entropy = $wrapper->field_sitepuller_tools_encrypt_entropy->value();
 
 	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
 		return FALSE;
@@ -122,12 +122,12 @@ function _sitepuller_get_ssh($machine, $remote_user, $user_node) {
 	return $ssh;
 }
 
-function sitepuller_action_check_remote_site($node) {
+function sitepuller_tools_action_check_remote_site($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
 
-	$user = $wrapper->field_sitepuller_remote_user->value();
-	$mach = $wrapper->field_sitepuller_remote_host->value();
-	$path = $wrapper->field_sitepuller_remote_root->value();
+	$user = $wrapper->field_sitepuller_tools_remote_user->value();
+	$mach = $wrapper->field_sitepuller_tools_remote_host->value();
+	$path = $wrapper->field_sitepuller_tools_remote_root->value();
 	$module = drupal_get_path('module', 'sitepuller');
 	$scripts =  drupal_realpath($module . '/sh');
 	$cmd = "/bin/bash $scripts/remote_dir_check.sh $user $mach $path";
