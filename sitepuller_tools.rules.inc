@@ -200,6 +200,20 @@ function sitepuller_tools_action_check_local_site($node) {
 	dsm('hello from sitepuller_tools_action_check_local_site');
 }
 
+function _sitepuller_prepare_remote_temp($ssh, $remote_site_wrapper, $directory) {
+	$error_string = sha1(time());
+	$tmp = $remote_site_wrapper->field_sitepuller_remote_tmp->value();
+	$user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+	$site = $remote_site_wrapper->field_sitepuller_remote_site->value();
+	$path = "$tmp/sitepuller/$site/$user/$directory";
+	$out = $ssh->exec("mkdir -p \"$path\"");
+	$out = $ssh->exec("test -d \"$path\" || echo $error_string");
+	if (($pos = strpos($out, $error_string)) !== FALSE) {
+		throw new Exception(t("can't prepare remote directory @dir: @out",
+			array('@dir' => $directory, '@out' => substr($out, 0, $pos - 1))));
+	}
+}
+
 function sitepuller_tools_action_save_task($node) {
 	dsm('hello from sitepuller_tools_action_save_task');
 }
