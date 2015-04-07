@@ -130,8 +130,9 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$hash = sha1($entropy_file);
 	$cipher = new Crypt_Blowfish();
 	$cipher->setKey($hash);
-	$packed = hex2bin($passphrase);
+	$packed = pack("H*" , $passphrase);
 	$decrypted = $cipher->decrypt($packed);
+	
 	if (($keyfile = file_get_contents($rsa_private)) === FALSE) {
 		throw new Exception(t("can't read contents of private key file"));
 	}
