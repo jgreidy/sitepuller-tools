@@ -58,7 +58,7 @@ function sitepuller_tools_action_save_user($node) {
 		$cipher->setKey($hash);
 		$encrypted = $cipher->encrypt($passphrase);
 		$unpacked = bin2hex($encrypted);
-		dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
+		// dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
 		$wrapper->field_sitepuller_rsa_passphrase->set($unpacked);
 		$wrapper->save();
 		$sitepuller_tools_message[] = t("Stored encrypted passphrase.");
@@ -66,9 +66,7 @@ function sitepuller_tools_action_save_user($node) {
 	else {
 		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $entropy));
 	}
-
-	dsm (array('final:',$sitepuller_tools_message));
-
+	
 	return array (
 		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
 		);
