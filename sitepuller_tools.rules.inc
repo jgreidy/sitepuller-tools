@@ -200,18 +200,15 @@ function sitepuller_tools_action_check_local_site($node) {
 	dsm('hello from sitepuller_tools_action_check_local_site');
 }
 
-function _sitepuller_prepare_remote_temp($ssh, $remote_site_wrapper, $directory) {
-	$error_string = sha1(time());
+function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $directory) {
 	$tmp = $remote_site_wrapper->field_sitepuller_remote_tmp->value();
 	$user = $remote_site_wrapper->field_sitepuller_remote_user->value();
 	$site = $remote_site_wrapper->field_sitepuller_remote_site->value();
 	$path = "$tmp/sitepuller/$site/$user/$directory";
-	$out = $ssh->exec("mkdir -p \"$path\"");
-	$out = $ssh->exec("test -d \"$path\" || echo $error_string");
-	if (($pos = strpos($out, $error_string)) !== FALSE) {
-		throw new Exception(t("can't prepare remote directory @dir: @out",
-			array('@dir' => $directory, '@out' => substr($out, 0, $pos - 1))));
-	}
+	$cmd[] = "mkdir -p $path";
+	$cmd[] = "test -d $path";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+	return $path;
 }
 
 function sitepuller_tools_action_save_task($node) {
@@ -220,13 +217,16 @@ function sitepuller_tools_action_save_task($node) {
 		dsm('hello from sitepuller_tools_action_save_task');
 		$task_wrapper = entity_metadata_wrapper('node', $node);
 		$subsites = $task_wrapper->field_sitepuller_subsites->value();
-		dsm($subsites);
+		if (empty($subsites)) {
+			throw new Exception(t("Doing all subsites is not working yet. Please specify one or more subsites"));
+		}
 
 		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 		$remote_site = node_load($remote_site_nid);
 		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
 		$machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
 		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+		$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
 
 		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 		$local_site = node_load($local_site_nid);
@@ -236,9 +236,15 @@ function sitepuller_tools_action_save_task($node) {
 		$local_user = node_load($local_user_nid);
 
 		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user, $local_user);
-		$sitepuller_tools_message[] = t("got ssh connection");
 
-		if ($task_wrapper->field_sitepuller_pull_database->value()) {}
+		if ($task_wrapper->field_sitepuller_pull_database->value()) {
+			// pull databases for specified subsites
+			foreach ($subsites as $delta => $subsite) {
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
+				$subsite_path = "$remote_root/sites/$subsite";
+				_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
+			}
+		}
 
 		dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
 	}
@@ -248,4 +254,30 @@ function sitepuller_tools_action_save_task($node) {
 			'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
 			);
 	}
+}
+
+function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
+	dsm($cmds);
+	foreach ($cmds as $step) {
+		$ssh->enableQuietMode();
+		$out = $ssh->exec($step);
+		$status = $ssh->getExitStatus();
+		$timeout = $ssh->isTimeout();
+		$err = $ssh->getStdError();
+		$ssh->disableQuietMode();
+		if ($status != 0) {
+			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; error '@err' ",
+				array('@step' => $step, '@exit' => $status, '@err' => $err)));
+		}
+		if ($timeout) {
+			throw new Exception(t("Timeout on step: '@step' ; exit '@exit' ; error '@err' ",
+				array('@step' => $step, '@exit' => $status, '@err' => $err)));
+		}		
+	}
+}
+
+function _sitepuller_tools_backup_db($ssh, $site, $directory) {
+	$cmd[] = "rm -f $directory/database.sql";
+	$cmd[] = "drush sql-dump --root=$site --ordered-dump > $directory/database.sql";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
