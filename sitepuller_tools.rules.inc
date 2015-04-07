@@ -241,13 +241,28 @@ function sitepuller_tools_action_save_task($node) {
 
 		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user, $local_user);
 
-		if ($task_wrapper->field_sitepuller_pull_database->value()) {
-			// pull databases for specified subsites
+		// if ($pull_code) {
+		// 	//drupal core
+		// 	$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code");
+		// 	_sitepuller_tools_backup_code($ssh, $remote_root, $temp_path);
+		// }
+
+		// if ($pull_databases) {
+		// 	// pull databases for specified subsites
+		// 	foreach ($subsites as $delta => $subsite) {
+		// 		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
+		// 		$subsite_path = "$remote_root/sites/$subsite";
+		// 		_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
+		// 	}
+		// }
+
+		if ($pull_public) {
 			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite");
 				$subsite_path = "$remote_root/sites/$subsite";
-				_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
+				_sitepuller_tools_backup_subsite_public_files($ssh, $subsite_path, $temp_path);
 			}
+
 		}
 
 		dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
