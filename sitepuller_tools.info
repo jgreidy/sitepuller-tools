@@ -1,0 +1,6 @@
+name = Sitepuller Tools
+description = Code to support Sitepuller Feature
+core = 7.x
+package = Utilities
+version = 7.x-1.0-alpha1
+project = sitepuller_tools
