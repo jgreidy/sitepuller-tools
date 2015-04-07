@@ -127,7 +127,7 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
 		throw new Exception(t("can't read contents of entropy file"));
 	}
-	$hash = md5($entropy_file);
+	$hash = sha1($entropy_file);
 	$cipher = new Crypt_Blowfish();
 	$cipher->setKey($hash);
 	$packed = hex2bin($passphrase);
