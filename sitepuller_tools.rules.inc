@@ -220,6 +220,10 @@ function sitepuller_tools_action_save_task($node) {
 		if (empty($subsites)) {
 			throw new Exception(t("Doing all subsites is not working yet. Please specify one or more subsites"));
 		}
+		$pull_databases = $task_wrapper->field_sitepuller_pull_database->value();
+		$pull_code = $task_wrapper->field_sitepuller_pull_code->value();
+		$pull_public = $task_wrapper->field_sitepuller_pull_files->value();
+		$pull_private = $task_wrapper->field_sitepuller_pull_private->value();
 
 		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 		$remote_site = node_load($remote_site_nid);
