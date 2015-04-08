@@ -124,8 +124,32 @@ function sitepuller_tools_action_check_remote_site($node) {
 		);
 }
 
+function _sitepuller_tools_local_site_check($node) {
+	$wrapper = entity_metadata_wrapper('node', $node);
+
+	$name = $wrapper->field_sitepuller_local_site_name->value();
+	$tmp = $wrapper->field_sitepuller_local_tmp->value();
+	$path = $wrapper->field_sitepuller_local_site_root->value();
+
+	$cmd[] = "cd $path"
+	$cmd[] = "drush vget 'site_name'";
+	$output = _sitepuller_tools_local_cmds($cmd);
+	$directory = "test";
+	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
+	return $output;
+}
+
 function sitepuller_tools_action_check_local_site($node) {
 	dsm('hello from sitepuller_tools_action_check_local_site');
+	try {
+		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
+	}
+	catch (Exception $e) {
+		$sitepuller_tools_message[] = $e->getMessage();
+	}
+	return array (
+		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
+		);
 }
 
 function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $directory) {
