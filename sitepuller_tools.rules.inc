@@ -25,7 +25,7 @@ function sitepuller_tools_rules_action_info() {
 				),
 		);
 	$actions['sitepuller_tools_action_check_local_site'] = array (
-		'label' => t('Sitepuller: Check remote site'),
+		'label' => t('Sitepuller: Check local site'),
 		'group' => t('Sitepuller'),
 		'parameter' => array(
 			'node' =>  array(
