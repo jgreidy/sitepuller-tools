@@ -106,21 +106,22 @@ function _sitepuller_tools_remote_site_check($node) {
 
 	$ssh = _sitepuller_tools_get_ssh($mach, $user);
 	$cmd[] = "cd $path ; drush vget 'site_name'";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd);
 	$directory = "test";
 	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
+	return $output;
 }
 
 function sitepuller_tools_action_check_remote_site($node) {
 	try {
-		_sitepuller_tools_remote_site_check($node);
+		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
-		return array (
-			'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
-			);
 	}
+	return array (
+		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
+		);
 }
 
 function sitepuller_tools_action_check_local_site($node) {
@@ -203,7 +204,7 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
 	dsm($cmds);
 	foreach ($cmds as $step) {
 		$ssh->enableQuietMode();
-		$out = $ssh->exec($step);
+		$output[] = $ssh->exec($step);
 		$status = $ssh->getExitStatus();
 		$timeout = $ssh->isTimeout();
 		$err = $ssh->getStdError();
@@ -217,6 +218,7 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
 				array('@step' => $step, '@exit' => $status, '@err' => $err)));
 		}
 	}
+	return $output;
 }
 
 function _sitepuller_tools_backup_db($ssh, $site, $directory) {
