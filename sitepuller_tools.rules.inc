@@ -13,7 +13,7 @@ function sitepuller_tools_rules_action_info() {
 		'group' => t('Sitepuller'),
 		'parameter' => array(
 			'node' =>  array(
-				'type' => 'node', 
+				'type' => 'node',
 				'label' => t('The Sitepuller Remote node.'),
 				),
 			),
@@ -29,7 +29,7 @@ function sitepuller_tools_rules_action_info() {
 		'group' => t('Sitepuller'),
 		'parameter' => array(
 			'node' =>  array(
-				'type' => 'node', 
+				'type' => 'node',
 				'label' => t('The Sitepuller Remote node.'),
 				),
 			),
@@ -72,7 +72,7 @@ function sitepuller_tools_rules_action_info() {
 					)
 				),
 		);
- 
+
 	return $actions;
 }
 
@@ -132,11 +132,11 @@ function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
 	$cipher->setKey($hash);
 	$packed = pack("H*" , $passphrase);
 	$decrypted = $cipher->decrypt($packed);
-	
+
 	if (($keyfile = file_get_contents($rsa_private)) === FALSE) {
 		throw new Exception(t("can't read contents of private key file"));
 	}
-	
+
 	$key = new Crypt_RSA();
 	$key->setPassword($decrypted);
 	$key->loadKey($keyfile);
@@ -171,7 +171,7 @@ $ssh = new Net_SSH2("$mach");
 if ($ssh->isConnected()) dsm('connected 1');
 // keyfile must be id_rsa (private key) - absolute path
 $keyfile = file_get_contents('/Users/jgreidy/.ssh/id_rsa');
-if (empty($keyfile)) { 
+if (empty($keyfile)) {
 	dsm('no keyfile');
 	return;
 }
@@ -291,7 +291,7 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
 		if ($timeout) {
 			throw new Exception(t("Timeout on step: '@step' ; exit '@exit' ; error '@err' ",
 				array('@step' => $step, '@exit' => $status, '@err' => $err)));
-		}		
+		}
 	}
 }
 
