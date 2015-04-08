@@ -235,6 +235,20 @@ function sitepuller_tools_action_save_task($node) {
 	}
 }
 
+function _sitepuller_tools_local_cmds($ssh, $cmds) {
+	dsm($cmds);
+	$output = array();
+	$status = 0;
+	foreach ($cmds as $step) {
+		$out = exec($step, $output, $status);
+		if ($status != 0) {
+			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; error '@err'",
+				array('@step' => $step, '@exit' => $status, '@err' => $err)));
+		}
+	}
+	return $output;
+}
+
 function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
 	dsm($cmds);
 	foreach ($cmds as $step) {
