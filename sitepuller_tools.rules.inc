@@ -131,7 +131,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$tmp = $wrapper->field_sitepuller_local_tmp->value();
 	$path = $wrapper->field_sitepuller_local_site_root->value();
 
-	$cmd[] = "cd $path"
+	$cmd[] = "cd $path";
 	$cmd[] = "drush vget 'site_name'";
 	$output = _sitepuller_tools_local_cmds($cmd);
 	$directory = "test";
