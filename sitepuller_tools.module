@@ -24,6 +24,10 @@ function sitepuller_tools_menu() {
 
 }
 
+/**
+ * form for configuring sitepuller_tools
+ * @return array form
+ */
 function sitepuller_tools_admin() {
   $form = array();
 
@@ -70,6 +74,12 @@ function sitepuller_tools_admin() {
   return system_settings_form($form);
 }
 
+/**
+ * implements hook_admin_validate
+ * @param  array $form        form
+ * @param  array &$form_state form state
+ * @return nothing              form set error or encrypt the passphrase
+ */
 function sitepuller_tools_admin_validate($form, &$form_state) {
   $user = $form_state['values']['sitepuller_tools_user'];
   $private = $form_state['values']['sitepuller_tools_private_key_file'];
