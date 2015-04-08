@@ -3,3 +3,82 @@
  * @file
  * Code for the Sitepuller-Tools module.
  */
+
+/**
+ * Implements hook_menu
+ */
+function sitepuller_tools_menu() {
+
+  $items = array();
+
+  $items['admin/settings/sitepuller'] = array(
+    'title' => 'Sitepuller module settings',
+    'description' => 'Enter information about your user on this machine.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('sitepuller_tools_admin'),
+    'access arguments' => array('administer sitepuller settings'),
+    'type' => MENU_NORMAL_ITEM,
+   );
+
+  return $items;
+
+}
+
+function sitepuller_tools_admin() {
+  $form = array();
+
+  $form['sitepuller_tools_user'] = array(
+    '#type' => 'textfield',
+    '#title' => t('User Name'),
+    '#default_value' => variable_get('sitepuller_tools_user', ''),
+    '#size' => 60,
+    '#maxlength' => 60,
+    '#description' => t("The name of your user account on this machine."),
+    '#required' => TRUE,
+  );
+
+  $form['sitepuller_tools_private_key_file'] = array(
+    '#type' => 'textfield',
+    '#title' => t('RSA Private Key File'),
+    '#default_value' => variable_get('sitepuller_tools_private_key_file', ''),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#description' => t("Absolute path to your ssh key file for RSA. eg. /Users/myuser/.ssh/id_rsa"),
+    '#required' => TRUE,
+  );
+
+  $form['sitepuller_tools_passphrase'] = array(
+    '#type' => 'password',
+    '#title' => t('RSA passphrase'),
+    '#default_value' => variable_get('sitepuller_tools_passphrase', 'the old one'),
+    '#size' => 60,
+    '#maxlength' => 128,
+    '#description' => t("Enter the passphrase you used to create your RSA public/private key pair."),
+    '#required' => TRUE,
+  );
+
+  $form['sitepuller_tools_entropy_file'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Encryption Entropy File'),
+    '#default_value' => variable_get('sitepuller_tools_entropy_file', ''),
+    '#size' => 60,
+    '#maxlength' => 255,
+    '#description' => t("A file that can be reliably be found on your disk somewhere (not available over the network or web accessible). The contents of this file will be used to encrypt and decrypt the RSA passphrase above. If the file gets deleted just make a different one, come back here and enter the passphrase again."),
+    '#required' => TRUE,
+  );
+
+  return system_settings_form($form);
+}
+
+function sitepuller_tools_admin_validate($form, &$form_state) {
+  dsm($form_state);
+  $user = $form_state['values']['sitepuller_tools_user'];
+  $private = $form_state['values']['sitepuller_tools_private_key_file'];
+  if (!file_exists($private)) {
+    form_set_error('sitepuller_tools_private_key_file', t('Can not open @file', array('@file' => $private)));
+  }
+  $entropy = $form_state['values']['sitepuller_tools_entropy_file'];
+  if (!file_exists($entropy)) {
+    form_set_error('sitepuller_tools_entropy_file', t('Can not open @file', array('@file' => $entropy)));
+  }
+}
