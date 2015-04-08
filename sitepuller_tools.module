@@ -11,12 +11,12 @@ function sitepuller_tools_menu() {
 
   $items = array();
 
-  $items['admin/settings/sitepuller'] = array(
+  $items['admin/settings/sitepuller_tools'] = array(
     'title' => 'Sitepuller module settings',
     'description' => 'Enter information about your user on this machine.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sitepuller_tools_admin'),
-    'access arguments' => array('administer sitepuller settings'),
+    'access arguments' => array('administer sitepuller_tools settings'),
     'type' => MENU_NORMAL_ITEM,
    );
 
