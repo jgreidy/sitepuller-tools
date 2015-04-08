@@ -163,6 +163,17 @@ function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $dire
 	return $path;
 }
 
+function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory) {
+	$tmp = $local_site_wrapper->field_sitepuller_remote_tmp->value();
+	$user = $local_site_wrapper->field_sitepuller_remote_user->value();
+	$site = $local_site_wrapper->field_sitepuller_remote_site->value();
+	$path = "$tmp/sitepuller/$site/$user/$directory";
+	$cmd[] = "mkdir -p $path";
+	$cmd[] = "test -d $path";
+	_sitepuller_tools_local_cmds($ssh, $cmd);
+	return $path;
+}
+
 function sitepuller_tools_action_save_task($node) {
 	$sitepuller_tools_message = array();
 	try {
