@@ -71,14 +71,26 @@ function sitepuller_tools_admin() {
 }
 
 function sitepuller_tools_admin_validate($form, &$form_state) {
-  dsm($form_state);
   $user = $form_state['values']['sitepuller_tools_user'];
   $private = $form_state['values']['sitepuller_tools_private_key_file'];
-  if (!file_exists($private)) {
+  if (!(file_exists($private) && ($private_rsa = file_get_contents($private)) !== FALSE)) {
     form_set_error('sitepuller_tools_private_key_file', t('Can not open @file', array('@file' => $private)));
   }
-  $entropy = $form_state['values']['sitepuller_tools_entropy_file'];
-  if (!file_exists($entropy)) {
+  $entropy_file = $form_state['values']['sitepuller_tools_entropy_file'];
+  if (!(file_exists($entropy_file) && ($entropy = file_get_contents($entropy_file)) !== FALSE)) {
     form_set_error('sitepuller_tools_entropy_file', t('Can not open @file', array('@file' => $entropy)));
   }
+
+  // encrypt the passphrase using the digested entropy file as a key
+  $passphrase = $form_state['values']['sitepuller_tools_passphrase'];
+
+  $hash = sha1($entropy);  // returns 40 character hex
+  $cipher = new Crypt_Blowfish();
+  // keys can range in length from 32 bits to 448 in steps of 8
+  $cipher->setKey($hash);
+  $encrypted = $cipher->encrypt($passphrase);
+  $unpacked = bin2hex($encrypted);
+
+  $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
+  // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
 }
