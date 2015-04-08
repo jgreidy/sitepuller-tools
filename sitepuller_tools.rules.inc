@@ -40,22 +40,6 @@ function sitepuller_tools_rules_action_info() {
 					)
 				),
 		);
-	$actions['sitepuller_tools_action_save_user'] = array (
-			'label' => t('Sitepuller: Save local user'),
-			'group' => t('Sitepuller'),
-			'parameter' => array(
-				'node' => array(
-					'type' => 'node',
-					'label' => t('The Sitepuller User node.'),
-					),
-				),
-			'provides' => array(
-				'sitepuller_tools_message' => array(
-					'type' => 'text',
-					'label' => t('Message'),
-					)
-				),
-		);
 	$actions['sitepuller_tools_action_save_task'] = array (
 			'label' => t('Sitepuller: Save task'),
 			'group' => t('Sitepuller'),
@@ -74,40 +58,6 @@ function sitepuller_tools_rules_action_info() {
 		);
 
 	return $actions;
-}
-
-function sitepuller_tools_action_save_user($node) {
-	$wrapper = entity_metadata_wrapper('node', $node);
-	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
-	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
-	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
-
-	$sitepuller_tools_message = array();
-	// be sure the private key file exists
-	if (!file_exists($rsa_private)) {
-		$sitepuller_tools_message[] = t("can't find private key @key", array('@key' => $rsa_private));
-	}
-
-	// be sure key file exists
-	if (file_exists($entropy)) {
-		$hash = sha1(file_get_contents($entropy));	// returns 40 character hex
-		$cipher = new Crypt_Blowfish();
-		// keys can range in length from 32 bits to 448 in steps of 8
-		$cipher->setKey($hash);
-		$encrypted = $cipher->encrypt($passphrase);
-		$unpacked = bin2hex($encrypted);
-		// dsm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
-		$wrapper->field_sitepuller_rsa_passphrase->set($unpacked);
-		$wrapper->save();
-		$sitepuller_tools_message[] = t("Stored encrypted passphrase.");
-	}
-	else {
-		$sitepuller_tools_message[] = t("can't find entropy file @file", array('@file' => $entropy));
-	}
-
-	return array (
-		'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
-		);
 }
 
 /**
