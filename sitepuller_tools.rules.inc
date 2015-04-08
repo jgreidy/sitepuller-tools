@@ -97,51 +97,30 @@ function _sitepuller_tools_get_ssh($machine, $remote_user) {
 	return $ssh;
 }
 
-function sitepuller_tools_action_check_remote_site($node) {
+function _sitepuller_tools_remote_site_check($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
 
 	$user = $wrapper->field_sitepuller_remote_user->value();
 	$mach = $wrapper->field_sitepuller_remote_host->value();
 	$path = $wrapper->field_sitepuller_remote_root->value();
-	$module = drupal_get_path('module', 'sitepuller');
-	$scripts =  drupal_realpath($module . '/sh');
-	$cmd = "/bin/bash $scripts/remote_dir_check.sh $user $mach $path";
-	$cmd = "ssh $user@$mach test -d \"$path\" || exit 1";
-	$cmd = escapeshellcmd($cmd);
-	//$cmd = "which ssh";
-	$output='';
-	$error='';
-	//exec($cmd, $output, $error);
-	dsm (array('the node is' => $node, 'command' => $cmd, 'error' => $error, 'output' => $output));
 
-
-$ssh = new Net_SSH2("$mach");
-if ($ssh->isConnected()) dsm('connected 1');
-// keyfile must be id_rsa (private key) - absolute path
-$keyfile = file_get_contents('/Users/jgreidy/.ssh/id_rsa');
-if (empty($keyfile)) {
-	dsm('no keyfile');
-	return;
-}
-$key = new Crypt_RSA();
-// password must be the one set for id_rsa above
-$key->setPassword('xxx');
-$key->loadKey($keyfile);
-if (!$ssh->login($user,$key)) {
-	$allErr = $ssh->getErrors();
-    dsm(array('Login Failed', $allErr));
-    return;
+	$ssh = _sitepuller_tools_get_ssh($mach, $user);
+	$cmd[] = "cd $path ; drush vget 'site_name'";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+	$directory = "test";
+	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
 }
 
-if ($ssh->isConnected()) dsm('connected 2');
-
-$pwd = $ssh->exec('pwd');
-$err1 = $ssh->getStdError();
-$ls = $ssh->exec("test -d \"$path\" || echo 'no path'");
-$err2 = $ssh->getStdError();
-$allErr = $ssh->getErrors();
-dsm(array($pwd, $err1, $ls, $err2, $allErr));
-
+function sitepuller_tools_action_check_remote_site($node) {
+	try {
+		_sitepuller_tools_remote_site_check($node);
+	}
+	catch (Exception $e) {
+		$sitepuller_tools_message[] = $e->getMessage();
+		return array (
+			'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
+			);
+	}
 }
 
 function sitepuller_tools_action_check_local_site($node) {
