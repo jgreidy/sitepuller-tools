@@ -184,10 +184,7 @@ function sitepuller_tools_action_save_task($node) {
 		$local_site = node_load($local_site_nid);
 		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
 
-		$local_user_nid = $task_wrapper->field_local_user->getIdentifier();
-		$local_user = node_load($local_user_nid);
-
-		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user, $local_user);
+		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user);
 
 		// if ($pull_code) {
 		// 	//drupal core
