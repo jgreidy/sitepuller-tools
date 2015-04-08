@@ -164,13 +164,13 @@ function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $dire
 }
 
 function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory) {
-	$tmp = $local_site_wrapper->field_sitepuller_remote_tmp->value();
-	$user = $local_site_wrapper->field_sitepuller_remote_user->value();
-	$site = $local_site_wrapper->field_sitepuller_remote_site->value();
+	$tmp = $local_site_wrapper->field_sitepuller_local_tmp->value();
+	$user = variable_get('sitepuller_tools_user', 'no_user');
+	$site = $local_site_wrapper->field_sitepuller_local_site_name->value();
 	$path = "$tmp/sitepuller/$site/$user/$directory";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
-	_sitepuller_tools_local_cmds($ssh, $cmd);
+	_sitepuller_tools_local_cmds($cmd);
 	return $path;
 }
 
