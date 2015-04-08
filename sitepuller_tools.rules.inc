@@ -64,15 +64,13 @@ function sitepuller_tools_rules_action_info() {
  * open an ssh connection to the machine
  * 	machine - string - name of remote machine
  *	remote_user - string - user to log in as on remote machines
- *	user_node - loaded node - local sitepuller user
  *
  *  returns Net_SSH2 ssh object or FALSE
  */
-function _sitepuller_tools_get_ssh($machine, $remote_user, $user_node) {
-	$wrapper = entity_metadata_wrapper('node', $user_node);
-	$rsa_private = $wrapper->field_sitepuller_rsa_private_key->value();
-	$passphrase = $wrapper->field_sitepuller_rsa_passphrase->value();
-	$entropy = $wrapper->field_sitepuller_encrypt_entropy->value();
+function _sitepuller_tools_get_ssh($machine, $remote_user) {
+	$rsa_private = variable_get('sitepuller_tools_private_key_file', '');
+	$passphrase = variable_get('sitepuller_tools_passphrase', 'the old one'); // encrypted
+	$entropy = variable_get('sitepuller_tools_entropy_file', '');
 
 	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
 		throw new Exception(t("can't read contents of entropy file"));
