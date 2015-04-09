@@ -5,6 +5,19 @@
  */
 
 /**
+ * Implements hook_permission
+ * @return array permission info
+ */
+function sitepuller_tools_permission() {
+   return array(
+    'administer sitepuller_tools settings' => array(
+      'title' => t('Configure Sitepuller user'),
+      'description' => t('Describe the your user account on the local machine for Sitepuller.'),
+    ),
+  );
+}
+
+/**
  * Implements hook_menu
  */
 function sitepuller_tools_menu() {
