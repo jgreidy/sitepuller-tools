@@ -238,7 +238,7 @@ function sitepuller_tools_action_save_task($node) {
 	}
 }
 
-function _sitepuller_tools_local_cmds($ssh, $cmds) {
+function _sitepuller_tools_local_cmds($cmds) {
 	dsm($cmds);
 	$output = array();
 	$status = 0;
