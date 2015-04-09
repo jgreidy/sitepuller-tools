@@ -114,6 +114,7 @@ function _sitepuller_tools_remote_site_check($node) {
 
 function sitepuller_tools_action_check_remote_site($node) {
 	try {
+		_sitepuller_tools_check_user();
 		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
 	}
 	catch (Exception $e) {
@@ -140,8 +141,8 @@ function _sitepuller_tools_local_site_check($node) {
 }
 
 function sitepuller_tools_action_check_local_site($node) {
-	dsm('hello from sitepuller_tools_action_check_local_site');
 	try {
+		_sitepuller_tools_check_user();
 		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
 	}
 	catch (Exception $e) {
@@ -177,7 +178,7 @@ function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory) {
 function sitepuller_tools_action_save_task($node) {
 	$sitepuller_tools_message = array();
 	try {
-		dsm('hello from sitepuller_tools_action_save_task');
+		_sitepuller_tools_check_user();
 		$task_wrapper = entity_metadata_wrapper('node', $node);
 		$subsites = $task_wrapper->field_sitepuller_subsites->value();
 		if (empty($subsites)) {
@@ -305,3 +306,17 @@ function _sitepuller_tools_encrypt($enropy, $passphrase) {
   $unpacked = bin2hex($encrypted);
   return $unpacked;
 }
+
+/**
+ * quick check to see if user is configured
+ * @return nothing throws exception if there is no user configuration
+ */
+function _sitepuller_tools_check_user() {
+	$encrypted_password = variable_get('sitepuller_tools_passphrase');
+	if (empty($encrypted_password) || (strlen($encrypted_password) != 40)) {
+			throw new Exception(t("Please go to @path to configure your local user account for Sitepuller.",
+				array('@path' => 'admin/settings/sitepuller_tools',
+				);
+	}
+}
+
