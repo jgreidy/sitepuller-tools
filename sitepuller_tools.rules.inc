@@ -105,7 +105,7 @@ function _sitepuller_tools_remote_site_check($node) {
 	$path = $wrapper->field_sitepuller_remote_root->value();
 
 	$ssh = _sitepuller_tools_get_ssh($mach, $user);
-	$cmd[] = "cd $path ; drush vget 'site_name'";
+	$cmd[] = "cd $path ; drush core-status --pipe | grep bootstrap | grep Successful || exit 1";
 	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd);
 	$directory = "test";
 	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
@@ -133,7 +133,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$path = $wrapper->field_sitepuller_local_site_root->value();
 
 	$cmd[] = "cd $path";
-	$cmd[] = "drush vget 'site_name'";
+	$cmd[] = "drush core-status --pipe | grep bootstrap | grep Successful || exit 1";
 	$output = _sitepuller_tools_local_cmds($cmd);
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
