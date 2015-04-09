@@ -315,10 +315,11 @@ function _sitepuller_tools_encrypt($entropy, $passphrase) {
  */
 function _sitepuller_tools_check_user() {
 	$encrypted_password = variable_get('sitepuller_tools_passphrase');
-	if (empty($encrypted_password) || (strlen($encrypted_password) != 40)) {
+	if (empty($encrypted_password)) {
 			throw new Exception(t("Please go to @path to configure your local user account for Sitepuller.",
-				array('@path' => 'admin/settings/sitepuller_tools',
-				);
+				array('@path' => 'admin/settings/sitepuller_tools',)
+				)
+			);
 	}
 }
 
