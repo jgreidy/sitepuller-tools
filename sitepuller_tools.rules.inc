@@ -191,6 +191,7 @@ function sitepuller_tools_action_save_task($node) {
 
 		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 		$remote_site = node_load($remote_site_nid);
+		array_push($sitepuller_tools_message, _sitepuller_tools_remote_site_check($remote_site));
 		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
 		$machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
 		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
@@ -198,6 +199,7 @@ function sitepuller_tools_action_save_task($node) {
 
 		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 		$local_site = node_load($local_site_nid);
+		array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($remote_site));
 		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
 
 		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user);
