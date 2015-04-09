@@ -289,3 +289,19 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site, $directory) 
 	$out6 = $ssh->exec($cmd);
 	dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6));
 }
+
+/**
+ * encrypt a string, return hex encoded version of encryption
+ * @param  string $enropy     file contents of key file
+ * @param  string $passphrase any string
+ * @return string             hex encoded encrypted string
+ */
+function _sitepuller_tools_encrypt($enropy, $passphrase) {
+  $hash = sha1($entropy);  // returns 40 character hex
+  $cipher = new Crypt_Blowfish();
+  // keys can range in length from 32 bits to 448 in steps of 8
+  $cipher->setKey($hash);
+  $encrypted = $cipher->encrypt($passphrase);
+  $unpacked = bin2hex($encrypted);
+  return $unpacked;
+}
