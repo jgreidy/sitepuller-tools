@@ -106,7 +106,9 @@ function sitepuller_tools_admin_validate($form, &$form_state) {
 
   // encrypt the passphrase using the digested entropy file as a key
   $passphrase = $form_state['values']['sitepuller_tools_passphrase'];
-
+  if(!function_exists('_sitepuller_tools_encrypt')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
   $unpacked = _sitepuller_tools_encrypt($entropy, $passphrase);
 
   $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
