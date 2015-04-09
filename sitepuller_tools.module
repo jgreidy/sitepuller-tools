@@ -94,12 +94,7 @@ function sitepuller_tools_admin_validate($form, &$form_state) {
   // encrypt the passphrase using the digested entropy file as a key
   $passphrase = $form_state['values']['sitepuller_tools_passphrase'];
 
-  $hash = sha1($entropy);  // returns 40 character hex
-  $cipher = new Crypt_Blowfish();
-  // keys can range in length from 32 bits to 448 in steps of 8
-  $cipher->setKey($hash);
-  $encrypted = $cipher->encrypt($passphrase);
-  $unpacked = bin2hex($encrypted);
+  $unpacked = _sitepuller_tools_encrypt($entropy, $passphrase);
 
   $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
   // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
