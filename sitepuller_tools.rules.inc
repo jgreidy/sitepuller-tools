@@ -245,8 +245,8 @@ function _sitepuller_tools_local_cmds($cmds) {
 	foreach ($cmds as $step) {
 		$out = exec($step, $output, $status);
 		if ($status != 0) {
-			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; error '@err'",
-				array('@step' => $step, '@exit' => $status, '@err' => $err)));
+			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; output '@err'",
+				array('@step' => $step, '@exit' => $status, '@err' => $output)));
 		}
 	}
 	return $output;
