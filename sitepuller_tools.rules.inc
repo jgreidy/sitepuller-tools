@@ -143,7 +143,7 @@ function _sitepuller_tools_local_site_check($node) {
 function sitepuller_tools_action_check_local_site($node) {
 	try {
 		_sitepuller_tools_check_user();
-		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
+		$sitepuller_tools_message = _sitepuller_tools_local_site_check($node);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
@@ -299,7 +299,7 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site, $directory) 
  * @param  string $passphrase any string
  * @return string             hex encoded encrypted string
  */
-function _sitepuller_tools_encrypt($enropy, $passphrase) {
+function _sitepuller_tools_encrypt($entropy, $passphrase) {
   $hash = sha1($entropy);  // returns 40 character hex
   $cipher = new Crypt_Blowfish();
   // keys can range in length from 32 bits to 448 in steps of 8
