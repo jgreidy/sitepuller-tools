@@ -246,22 +246,22 @@ function sitepuller_tools_action_save_task($node) {
 	}
 }
 
-function _sitepuller_tools_local_cmds($cmds) {
-	dsm($cmds);
+function _sitepuller_tools_local_cmds($cmds, $error_message = FALSE) {
 	$output = array();
 	$status = 0;
-	foreach ($cmds as $step) {
-		$out = exec($step, $output, $status);
-		if ($status != 0) {
-			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; output '@err'",
-				array('@step' => $step, '@exit' => $status, '@err' => $output)));
+	$one_cmd = implode(" ; ", $cmds);
+	$out = exec($one_cmd, $output, $status);
+	if ($status != 0) {
+		if ($error_message === FALSE) {
+			$error_message = t("Error on cmd: '@step' ; exit '@exit'",
+				array('@step' => $one_cmd, '@exit' => $status));
 		}
-	}
+		throw new Exception($error_message);
+		}
 	return $output;
 }
 
-function _sitepuller_tools_ssh_cmds($ssh, $cmds) {
-	dsm($cmds);
+function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
 	foreach ($cmds as $step) {
 		$ssh->enableQuietMode();
 		$output[] = $ssh->exec($step);
