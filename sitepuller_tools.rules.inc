@@ -294,12 +294,27 @@ function _sitepuller_tools_backup_code($ssh, $site, $directory) {
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
 
-function _sitepuller_tools_backup_subsite_public_files($ssh, $site, $directory) {
-	$cmd = "cd $site ; drush vget file_public_path";
+function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsite_path, $temp_directory) {
+	$cmd = "cd $subsite_path ; drush vget file_public_path";
 	$out7 = $ssh->exec($cmd);
-	$cmd = "cd $site ; drush vget file_directory_path";
-	$out6 = $ssh->exec($cmd);
-	dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6));
+	$match = array();
+	preg_match("/file_public_path: \"([^\"]+)\"/", $out7, $match);
+	if (empty($match)) {
+		$cmd = "cd $subsite_path ; drush vget file_directory_path";
+		$out6 = $ssh->exec($cmd);
+		$match = array();
+		preg_match("/file_directory_path: \"([^\"]+)\"/", $out6, $match);
+		if (empty($match)) {
+			throw new Exception(t("Failed to determine public file path for @s", array('@s' => $site)));
+		}
+	}
+	$path = $site_path . '/' . $match[1];
+	$target = $temp_directory . '/files';
+	//dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6, 'path' => $path, 'target' => $target));
+	$cmd = array();
+	$cmd[] = "mkdir -p $target";
+	$cmd[] = "rsync -avcz --delete $path/ $target/";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path)));
 }
 
 /**
