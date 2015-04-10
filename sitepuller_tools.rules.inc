@@ -103,19 +103,22 @@ function _sitepuller_tools_remote_site_check($node) {
 	$user = $wrapper->field_sitepuller_remote_user->value();
 	$mach = $wrapper->field_sitepuller_remote_host->value();
 	$path = $wrapper->field_sitepuller_remote_root->value();
+	$name = $wrapper->field_sitepuller_remote_site->value();
 
 	$ssh = _sitepuller_tools_get_ssh($mach, $user);
+	$cmd[] = "test -d $path";
+	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Directory does not exist: @d", array("@d" => $path)));
 	$cmd[] = "cd $path ; drush core-status --pipe | grep bootstrap | grep Successful";
-	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't connect to Drupal database for site '@name'", array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
-	return $output;
+	return t("Validated remote site '@name'", array('@name' => $name));
 }
 
 function sitepuller_tools_action_check_remote_site($node) {
 	try {
 		_sitepuller_tools_check_user();
-		$sitepuller_tools_message = _sitepuller_tools_remote_site_check($node);
+		$sitepuller_tools_message[] = _sitepuller_tools_remote_site_check($node);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
