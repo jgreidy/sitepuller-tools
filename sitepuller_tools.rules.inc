@@ -134,19 +134,24 @@ function _sitepuller_tools_local_site_check($node) {
 	$name = $wrapper->field_sitepuller_local_site_name->value();
 	$tmp = $wrapper->field_sitepuller_local_tmp->value();
 	$path = $wrapper->field_sitepuller_local_site_root->value();
+	$connect = $wrapper->field_sitepuller_local_db_connec->value();
+	$php = variable_get('sitepuller_tools_php_path', 'php');
+	$drush = variable_get('sitepuller_tools_drush_path', 'drush');
+	$mysql = variable_get('sitepuller_tools_mysql_path', 'mysql');
 
-	$cmd[] = "cd $path";
-	$cmd[] = "drush core-status --pipe | grep bootstrap | grep Successful";
-	$output = _sitepuller_tools_local_cmds($cmd);
+	$cmd[] = "test -d $path";
+	$output = _sitepuller_tools_local_cmds($cmd, t('directory does not exist: @dir', array('@dir' => $path)));
+	$cmd[] = str_replace('mysql', $mysql, $connect) . " -e 'exit'";
+	$output = _sitepuller_tools_local_cmds($cmd, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
-	return $output;
+	return t("Validated local site '@name'", array('@name' => $name));
 }
 
 function sitepuller_tools_action_check_local_site($node) {
 	try {
 		_sitepuller_tools_check_user();
-		$sitepuller_tools_message = _sitepuller_tools_local_site_check($node);
+		$sitepuller_tools_message[] = _sitepuller_tools_local_site_check($node);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
@@ -163,7 +168,7 @@ function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $dire
 	$path = "$tmp/sitepuller/$site/$user/$directory";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+	_sitepuller_tools_ssh_cmds($ssh, $cmd, t('Failed to create remote directory: @d', array('@d' => $path)));
 	return $path;
 }
 
@@ -174,7 +179,7 @@ function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory) {
 	$path = "$tmp/sitepuller/$site/$user/$directory";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
-	_sitepuller_tools_local_cmds($cmd);
+	_sitepuller_tools_local_cmds($cmd, t('Failed to create local directory: @d', array('@d' => $path)));
 	return $path;
 }
 
