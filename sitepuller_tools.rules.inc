@@ -161,22 +161,22 @@ function sitepuller_tools_action_check_local_site($node) {
 		);
 }
 
-function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $directory) {
+function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $directory = FALSE) {
 	$tmp = $remote_site_wrapper->field_sitepuller_remote_tmp->value();
 	$user = $remote_site_wrapper->field_sitepuller_remote_user->value();
 	$site = $remote_site_wrapper->field_sitepuller_remote_site->value();
-	$path = "$tmp/sitepuller/$site/$user/$directory";
+	$path = $directory ? "$tmp/sitepuller/$site/$user/$directory" : "$tmp/sitepuller/$site/$user";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd, t('Failed to create remote directory: @d', array('@d' => $path)));
 	return $path;
 }
 
-function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory) {
+function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory = FALSE) {
 	$tmp = $local_site_wrapper->field_sitepuller_local_tmp->value();
 	$user = variable_get('sitepuller_tools_user', 'no_user');
 	$site = $local_site_wrapper->field_sitepuller_local_site_name->value();
-	$path = "$tmp/sitepuller/$site/$user/$directory";
+	$path = $directory ? "$tmp/sitepuller/$site/$user/$directory" : "$tmp/sitepuller/$site/$user";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
 	_sitepuller_tools_local_cmds($cmd, t('Failed to create local directory: @d', array('@d' => $path)));
@@ -201,7 +201,7 @@ function sitepuller_tools_action_save_task($node) {
 		$remote_site = node_load($remote_site_nid);
 		array_push($sitepuller_tools_message, _sitepuller_tools_remote_site_check($remote_site));
 		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
-		$machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+		$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
 		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
 		$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
 
@@ -209,8 +209,11 @@ function sitepuller_tools_action_save_task($node) {
 		$local_site = node_load($local_site_nid);
 		array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
 		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
+		$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
+		$local_db_connect = $local_site_wrapper->field_sitepuller_local_db_connec->value();
 
-		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user);
+		$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+		$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper);
 
 		if ($pull_code) {
 			//drupal core
@@ -229,7 +232,7 @@ function sitepuller_tools_action_save_task($node) {
 
 		if ($pull_public) {
 			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite");
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite/files");
 				$subsite_path = "$remote_root/sites/$subsite";
 				_sitepuller_tools_backup_subsite_public_files($ssh, $remote_root, $subsite_path, $temp_path);
 			}
@@ -237,17 +240,45 @@ function sitepuller_tools_action_save_task($node) {
 
 		if ($pull_private) {
 			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite");
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite/private/files");
 				$subsite_path = "$remote_root/sites/$subsite";
 				_sitepuller_tools_backup_subsite_private_files($ssh, $remote_root, $subsite_path, $temp_path);
 			}
 		}
-		//dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
+
+		// copy the site to the local machine
+		$local_temp = _sitepuller_tools_prepare_local_temp($local_site_wrapper);
+		$local_user = variable_get('sitepuller_tools_user', '');
+		$cmd[] = "hostname";
+		$local_machine = _sitepuller_tools_local_cmds($cmd);
+		$local_machine = array_pop($local_machine);
+		unset($cmd);
+		$shcmd[] = "#!/bin/bash";
+		$shcmd[] = "set -x";
+		$shcmd[] = "rsync -acz --delete -e 'ssh -l $remote_user' --exclude=rsync.sh $remote_user@$remote_machine:$remote_temp/ $local_temp/ ";
+		$shcmd[] = "rsync -acz --delete --exclude=sites/*/settings.php  $local_temp/code/ $local_site_root/";
+		//$shcmd[] = "cp $local_site_root/sites/default/default.settings.php $local_site_root/sites/default/settings.php";
+		$shcmd[] = "cd $local_site_root";
+		$shcmd[] = "$local_db_connect < $local_temp/db/default/database.sql";
+		$schmd[] = "drush vset file_directory_path sites/default/files";
+		$schmd[] = "drush vset file_directory_temp /tmp";
+		$schmd[] = "drush vset file_private_path sites/default/private/files";
+		$schmd[] = "drush vset file_public_path sites/default/files";
+		$schmd[] = "drush vset file_temporary_path /tmp";
+		file_put_contents("$local_temp/rsync.sh", implode("\n", $shcmd));
+		chmod("$local_temp/rsync.sh", 0755);
+		drupal_set_message(t("Go and execute this: @f", array('@f' => "$local_temp/rsync.sh")), 'status', FALSE);
+		// $out = exec("/bin/bash $local_temp/rsync.sh");
+		// $cmd[] = "rsync -avcz --delete -e 'ssh -l $remote_user' $remote_user@$remote_machine:$remote_temp/ $local_temp/";
+		// $err = t("Can't pull temp directory from @rem to @loc",
+		// 	array('@rem' => $remote_machine, '@loc' => $local_temp));
+		// $out = _sitepuller_tools_local_cmds($cmd);
+		// dsm($out);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
 		return array (
-			'sitepuller_tools_message' => implode("\r",$sitepuller_tools_message),
+			'sitepuller_tools_message' => implode("\r ",$sitepuller_tools_message),
 			);
 	}
 }
@@ -289,14 +320,13 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
 }
 
 function _sitepuller_tools_backup_db($ssh, $site, $directory) {
-	$cmd[] = "rm -f $directory/database.sql";
-	$cmd[] = "drush sql-dump --root=$site --ordered-dump > $directory/database.sql";
+	$cmd[] = "cd $site ; drush sql-dump --ordered-dump > $directory/database.sql";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
 
 function _sitepuller_tools_backup_code($ssh, $site, $directory) {
-	$cmd[] = "rsync -avcz --delete --exclude=sites/* $site/ $directory/";
-	$cmd[] = "rsync -avcz --delete $site/sites/all $directory/sites/";
+	$cmd[] = "rsync -avcz --delete --exclude=sites/*/settings.php --exclude=sites/*/files --exclude=sites/*/private $site/ $directory/";
+	//$cmd[] = "rsync -avcz --delete $site/sites/all $directory/sites/";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
 
@@ -315,8 +345,7 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsit
 		}
 	}
 	$path = $site_path . '/' . $match[1];
-	$target = $temp_directory . '/files';
-	//dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6, 'path' => $path, 'target' => $target));
+	$target = $temp_directory;
 	$cmd = array();
 	$cmd[] = "mkdir -p $target";
 	$cmd[] = "rsync -avcz --delete $path/ $target/";
@@ -332,8 +361,7 @@ function _sitepuller_tools_backup_subsite_private_files($ssh, $site_path, $subsi
 		throw new Exception(t("Failed to determine private file path for @s", array('@s' => $subsite_path)));
 		}
 	$path = $site_path . '/' . $match[1];
-	$target = $temp_directory . '/files/private';
-	//dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6, 'path' => $path, 'target' => $target));
+	$target = $temp_directory;
 	$cmd = array();
 	$cmd[] = "mkdir -p $target";
 	$cmd[] = "rsync -avcz --delete $path/ $target/";
