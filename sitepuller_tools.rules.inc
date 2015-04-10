@@ -270,8 +270,9 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
 		$err = $ssh->getStdError();
 		$ssh->disableQuietMode();
 		if ($status != 0) {
-			throw new Exception(t("Error on step: '@step' ; exit '@exit' ; error '@err' ",
-				array('@step' => $step, '@exit' => $status, '@err' => $err)));
+			$msg = $error_message ? $error_message : t("Error on step: '@step' ; exit '@exit' ; error '@err' ",
+				array('@step' => $step, '@exit' => $status, '@err' => $err));
+			throw new Exception($msg);
 		}
 		if ($timeout) {
 			throw new Exception(t("Timeout on step: '@step' ; exit '@exit' ; error '@err' ",
