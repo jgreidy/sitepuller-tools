@@ -231,12 +231,12 @@ function sitepuller_tools_action_save_task($node) {
 			foreach ($subsites as $delta => $subsite) {
 				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite");
 				$subsite_path = "$remote_root/sites/$subsite";
-				_sitepuller_tools_backup_subsite_public_files($ssh, $subsite_path, $temp_path);
+				_sitepuller_tools_backup_subsite_public_files($ssh, $remote_root, $subsite_path, $temp_path);
 			}
 
 		}
 
-		dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
+		//dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
