@@ -212,20 +212,20 @@ function sitepuller_tools_action_save_task($node) {
 
 		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user);
 
-		// if ($pull_code) {
-		// 	//drupal core
-		// 	$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code");
-		// 	_sitepuller_tools_backup_code($ssh, $remote_root, $temp_path);
-		// }
+		if ($pull_code) {
+			//drupal core
+			$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code");
+			_sitepuller_tools_backup_code($ssh, $remote_root, $temp_path);
+		}
 
-		// if ($pull_databases) {
-		// 	// pull databases for specified subsites
-		// 	foreach ($subsites as $delta => $subsite) {
-		// 		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
-		// 		$subsite_path = "$remote_root/sites/$subsite";
-		// 		_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
-		// 	}
-		// }
+		if ($pull_databases) {
+			// pull databases for specified subsites
+			foreach ($subsites as $delta => $subsite) {
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
+				$subsite_path = "$remote_root/sites/$subsite";
+				_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
+			}
+		}
 
 		if ($pull_public) {
 			foreach ($subsites as $delta => $subsite) {
@@ -233,9 +233,15 @@ function sitepuller_tools_action_save_task($node) {
 				$subsite_path = "$remote_root/sites/$subsite";
 				_sitepuller_tools_backup_subsite_public_files($ssh, $remote_root, $subsite_path, $temp_path);
 			}
-
 		}
 
+		if ($pull_private) {
+			foreach ($subsites as $delta => $subsite) {
+				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite");
+				$subsite_path = "$remote_root/sites/$subsite";
+				_sitepuller_tools_backup_subsite_private_files($ssh, $remote_root, $subsite_path, $temp_path);
+			}
+		}
 		//dsm(array('site' => $remote_site_nid, 'user' => $local_user_nid));
 	}
 	catch (Exception $e) {
@@ -305,7 +311,7 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsit
 		$match = array();
 		preg_match("/file_directory_path: \"([^\"]+)\"/", $out6, $match);
 		if (empty($match)) {
-			throw new Exception(t("Failed to determine public file path for @s", array('@s' => $site)));
+			throw new Exception(t("Failed to determine public file path for @s", array('@s' => $subsite_path)));
 		}
 	}
 	$path = $site_path . '/' . $match[1];
@@ -315,6 +321,23 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsit
 	$cmd[] = "mkdir -p $target";
 	$cmd[] = "rsync -avcz --delete $path/ $target/";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path)));
+}
+
+function _sitepuller_tools_backup_subsite_private_files($ssh, $site_path, $subsite_path, $temp_directory) {
+	$cmd = "cd $subsite_path ; drush vget file_private_path";
+	$out7 = $ssh->exec($cmd);
+	$match = array();
+	preg_match("/file_private_path: \"([^\"]+)\"/", $out7, $match);
+	if (empty($match)) {
+		throw new Exception(t("Failed to determine private file path for @s", array('@s' => $subsite_path)));
+		}
+	$path = $site_path . '/' . $match[1];
+	$target = $temp_directory . '/files/private';
+	//dsm (array("d7 file_public_path" => $out7, "d6 file_directory_path" => $out6, 'path' => $path, 'target' => $target));
+	$cmd = array();
+	$cmd[] = "mkdir -p $target";
+	$cmd[] = "rsync -avcz --delete $path/ $target/";
+	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path)));
 }
 
 /**
@@ -345,5 +368,9 @@ function _sitepuller_tools_check_user() {
 				)
 			);
 	}
+}
+
+function _sitepuller_tools_local_drupal_version() {
+
 }
 
