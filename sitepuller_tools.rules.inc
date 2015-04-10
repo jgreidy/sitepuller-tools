@@ -207,7 +207,7 @@ function sitepuller_tools_action_save_task($node) {
 
 		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 		$local_site = node_load($local_site_nid);
-		array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($remote_site));
+		array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
 		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
 
 		$ssh = _sitepuller_tools_get_ssh($machine, $remote_user);
