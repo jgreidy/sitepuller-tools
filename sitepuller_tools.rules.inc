@@ -352,7 +352,8 @@ function _sitepuller_tools_backup_db($ssh, $site, $directory) {
 }
 
 function _sitepuller_tools_backup_code($ssh, $site, $directory) {
-	$cmd[] = "rsync -avcz --delete --exclude=sites/*/settings.php --exclude=sites/*/files --exclude=sites/*/private $site/ $directory/";
+	// use . to also grab .htaccess
+	$cmd[] = "shopt -s dotglob ; rsync -avcz --delete --exclude=sites/*/settings.php --exclude=sites/*/files --exclude=sites/*/private $site/ $directory/";
 	//$cmd[] = "rsync -avcz --delete $site/sites/all $directory/sites/";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
@@ -391,7 +392,7 @@ function _sitepuller_tools_backup_subsite_private_files($ssh, $site_path, $subsi
 	$target = $temp_directory;
 	$cmd = array();
 	$cmd[] = "mkdir -p $target";
-	$cmd[] = "rsync -avcz --delete $path/ $target/";
+	$cmd[] = "shopt -s dotglob ; rsync -avcz --delete $path/ $target/";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path)));
 }
 
