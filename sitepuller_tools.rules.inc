@@ -253,6 +253,9 @@ function sitepuller_tools_action_save_task($node) {
 		$local_machine = _sitepuller_tools_local_cmds($cmd);
 		$local_machine = array_pop($local_machine);
 		unset($cmd);
+		_sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_temp, $local_temp, $local_site_root,
+	$local_db_connect);
+		return;
 		$shcmd[] = "#!/bin/bash";
 		$shcmd[] = "set -x";
 		$shcmd[] = "rsync -acz --delete -e 'ssh -l $remote_user' --exclude=rsync.sh $remote_user@$remote_machine:$remote_temp/ $local_temp/ ";
@@ -280,6 +283,30 @@ function sitepuller_tools_action_save_task($node) {
 		return array (
 			'sitepuller_tools_message' => implode("\r ",$sitepuller_tools_message),
 			);
+	}
+}
+
+function _sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_temp, $local_temp, $local_site_root,
+	$local_db_connect) {
+	$cmd = array (
+		"rsync -asz --delete -e ssh $remote_user@$remote_machine:$remote_temp/ $local_temp/",
+		"rsync -acz --exclude=sites/*/settings.php $local_temp/code/ $local_site_root/",
+		'export PHP_ID=php5_5; export PATH="/Applications/DevDesktop/$PHP_ID/bin:/Applications/DevDesktop/mysql/bin:/Applications/DevDesktop/drush:$PATH"',
+		"cd $local_site_root",
+		"$local_db_connect < $local_temp/db/default/database.sql",
+		"drush vset file_directory_path sites/default/files",
+		"drush vset file_directory_temp /tmp",
+		"drush vset file_private_path sites/default/private/files",
+		"drush vset file_public_path sites/default/files",
+		"drush vset file_temporary_path /tmp",
+		"drush cc all",
+		);
+	try {
+		$out = _sitepuller_tools_local_cmds($cmd);
+		dsm($out);
+	}
+	catch (Exception $e) {
+		drupal_set_message(t("rsync via exec failed."), 'warning', FALSE);
 	}
 }
 
