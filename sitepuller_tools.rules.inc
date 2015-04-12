@@ -273,10 +273,11 @@ function sitepuller_tools_action_save_task($node) {
 
 function _sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_temp, $local_temp, $local_site_root,
 	$local_db_connect) {
+	$preamble = variable_get('sitepuller_tools_preamble', '');
 	$cmd = array (
 		"rsync -asz --delete -e ssh $remote_user@$remote_machine:$remote_temp/ $local_temp/",
 		"rsync -acz --exclude=sites/*/settings.php $local_temp/code/ $local_site_root/",
-		'export PHP_ID=php5_5; export PATH="/Applications/DevDesktop/$PHP_ID/bin:/Applications/DevDesktop/mysql/bin:/Applications/DevDesktop/drush:$PATH"',
+		"$preamble",
 		"cd $local_site_root",
 		"$local_db_connect < $local_temp/db/default/database.sql",
 		"drush vset file_directory_path sites/default/files",
@@ -302,13 +303,13 @@ function _sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_tem
  */
 function _sitepuller_tools_get_db_connect_string($local_site_root) {
 	try {
-
+		$preamble = variable_get('sitepuller_tools_preamble', '');
 		$cmd = array (
-		'export PHP_ID=php5_5; export PATH="/Applications/DevDesktop/$PHP_ID/bin:/Applications/DevDesktop/mysql/bin:/Applications/DevDesktop/drush:$PATH"',
-		"cd $local_site_root/default",
-		"which drush",
-		//'drush sql-connect -v --root=' . "$local_site_root/default",
-		//"drush status --show-passwords",
+			"$preamble",
+			"cd $local_site_root/default",
+			"which drush",
+			//'drush sql-connect -v --root=' . "$local_site_root/default",
+			//"drush status --show-passwords",
 		);
 		$out = _sitepuller_tools_local_cmds($cmd);
 		dsm($out);
