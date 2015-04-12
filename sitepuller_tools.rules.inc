@@ -306,9 +306,9 @@ function _sitepuller_tools_get_db_connect_string($local_site_root) {
 		$preamble = variable_get('sitepuller_tools_preamble', '');
 		$cmd = array (
 			"$preamble",
-			"cd $local_site_root/default",
-			"which drush",
-			//'drush sql-connect -v --root=' . "$local_site_root/default",
+			"cd $local_site_root",
+			//"which drush",
+			"drush sql-connect",
 			//"drush status --show-passwords",
 		);
 		$out = _sitepuller_tools_local_cmds($cmd);
