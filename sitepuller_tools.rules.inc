@@ -295,6 +295,30 @@ function _sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_tem
 	}
 }
 
+/**
+ * tries to get connect string from local site - NEVER WORKED FOR DEVDESKTOP!
+ * @param  [type] $local_site_root [description]
+ * @return [type]                  [description]
+ */
+function _sitepuller_tools_get_db_connect_string($local_site_root) {
+	try {
+
+		$cmd = array (
+		'export PHP_ID=php5_5; export PATH="/Applications/DevDesktop/$PHP_ID/bin:/Applications/DevDesktop/mysql/bin:/Applications/DevDesktop/drush:$PATH"',
+		"cd $local_site_root/default",
+		"which drush",
+		//'drush sql-connect -v --root=' . "$local_site_root/default",
+		//"drush status --show-passwords",
+		);
+		$out = _sitepuller_tools_local_cmds($cmd);
+		dsm($out);
+	}
+	catch (Exception $e) {
+		drupal_set_message(t("Can not get sql connect string for @site",
+			array ('@site' => $local_site_root)), 'warning', FALSE);
+	}
+}
+
 function _sitepuller_tools_local_cmds($cmds, $error_message = FALSE) {
 	$output = array();
 	$status = 0;
