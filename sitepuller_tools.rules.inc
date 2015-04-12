@@ -254,29 +254,7 @@ function sitepuller_tools_action_save_task($node) {
 		$local_machine = array_pop($local_machine);
 		unset($cmd);
 		_sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_temp, $local_temp, $local_site_root,
-	$local_db_connect);
-		return;
-		$shcmd[] = "#!/bin/bash";
-		$shcmd[] = "set -x";
-		$shcmd[] = "rsync -acz --delete -e 'ssh -l $remote_user' --exclude=rsync.sh $remote_user@$remote_machine:$remote_temp/ $local_temp/ ";
-		$shcmd[] = "rsync -acz --delete --exclude=sites/*/settings.php  $local_temp/code/ $local_site_root/";
-		//$shcmd[] = "cp $local_site_root/sites/default/default.settings.php $local_site_root/sites/default/settings.php";
-		$shcmd[] = "cd $local_site_root";
-		$shcmd[] = "$local_db_connect < $local_temp/db/default/database.sql";
-		$schmd[] = "drush vset file_directory_path sites/default/files";
-		$schmd[] = "drush vset file_directory_temp /tmp";
-		$schmd[] = "drush vset file_private_path sites/default/private/files";
-		$schmd[] = "drush vset file_public_path sites/default/files";
-		$schmd[] = "drush vset file_temporary_path /tmp";
-		file_put_contents("$local_temp/rsync.sh", implode("\n", $shcmd));
-		chmod("$local_temp/rsync.sh", 0755);
-		drupal_set_message(t("Go and execute this: @f", array('@f' => "$local_temp/rsync.sh")), 'status', FALSE);
-		// $out = exec("/bin/bash $local_temp/rsync.sh");
-		// $cmd[] = "rsync -avcz --delete -e 'ssh -l $remote_user' $remote_user@$remote_machine:$remote_temp/ $local_temp/";
-		// $err = t("Can't pull temp directory from @rem to @loc",
-		// 	array('@rem' => $remote_machine, '@loc' => $local_temp));
-		// $out = _sitepuller_tools_local_cmds($cmd);
-		// dsm($out);
+			$local_db_connect);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
