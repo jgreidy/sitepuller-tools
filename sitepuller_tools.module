@@ -120,7 +120,7 @@ function sitepuller_tools_admin() {
     '#default_value' => variable_get('sitepuller_tools_preamble', ''),
     '#cols' => 120,
     '#rows' => 3,
-    '#description' => t("DevDesktop at least puts a prefix on each command line session that allows drush commands to work. Paste that preamble in here."),
+    '#description' => t("DevDesktop at least puts a prefix on each command line session that allows drush commands to work. Paste that preamble in here, eg. export PHP_ID=php5_5; export PATH=\"/Applications/DevDesktop/$PHP_ID/bin:/Applications/DevDesktop/mysql/bin:/Applications/DevDesktop/drush:$PATH\""),
     '#wysiwyg' => false,
   );
 
