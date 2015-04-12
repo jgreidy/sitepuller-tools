@@ -17,5 +17,10 @@ Install sitepuller:
     Do you really want to continue? (y/n): y
     > One or more extensions have dependencies managed by Composer.
     Update packages managed by Composer? (y/n): y
-- some more steps
+- go into the drupal site and go to admin/modules
+- go to Sitepuller Tools -> Permissions and give yourself all permissions for
+-- Sitepuller Local
+-- Sitepuller Remote
+-- Sitepuller Task
+-
 
