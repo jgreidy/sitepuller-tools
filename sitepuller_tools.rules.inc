@@ -495,3 +495,19 @@ function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
 	return $subsites;
 }
 
+function _sitepuller_tools_save_subsites($nid, $subsites) {
+	$subsites = _sitepuller_tools_load_subsites();
+	$subsites["$nid"] = $subsites;
+	$subsites_ser = serialize($subsites);
+	variable_set('sitepuller_tools_subsites', $subsites_ser);
+}
+
+function _sitepuller_tools_load_subsites() {
+	$subsites_ser = variable_get('sitepuller_tools_subsites', '');
+	if (empty($subsites_ser)) {
+		$subsites = array();
+	}
+	else {
+		$subsites = unserialize($subsites_ser);
+	}
+}
