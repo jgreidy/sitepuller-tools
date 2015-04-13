@@ -137,9 +137,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$connect = $wrapper->field_sitepuller_local_db_connec->value();
 	$use_make = $wrapper->field_sitepuller_use_make_file->value();
 	$make_file = $wrapper->field_sitepuller_drush_make_file ->value();
-	$php = variable_get('sitepuller_tools_php_path', 'php');
-	$drush = variable_get('sitepuller_tools_drush_path', 'drush');
-	$mysql = variable_get('sitepuller_tools_mysql_path', 'mysql');
+	$preamble = variable_get('sitepuller_tools_preamble', '');
 
 	if ($use_make != 0) {
 		$cmd[] = "test -d $path || drush make --prepare-install --working-copy $make_file $path";
@@ -148,7 +146,8 @@ function _sitepuller_tools_local_site_check($node) {
 
 	$cmd[0] = "test -d $path";
 	$output = _sitepuller_tools_local_cmds($cmd, t('directory does not exist: @dir', array('@dir' => $path)));
-	$cmd[0] = str_replace('mysql', $mysql, $connect) . " -e 'exit'";
+	$cmd[0] = $preamble;
+	$cmd[] = "$connect -e 'exit'";
 	$output = _sitepuller_tools_local_cmds($cmd, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);

@@ -84,35 +84,35 @@ function sitepuller_tools_admin() {
     '#required' => TRUE,
   );
 
-  $form['sitepuller_tools_php_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to php'),
-    '#default_value' => variable_get('sitepuller_tools_php_path', 'php'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to php used by your desktop server. Find it by typing 'which php' on the command line."),
-    '#required' => TRUE,
-  );
+  // $form['sitepuller_tools_php_path'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Path to php'),
+  //   '#default_value' => variable_get('sitepuller_tools_php_path', 'php'),
+  //   '#size' => 60,
+  //   '#maxlength' => 255,
+  //   '#description' => t("Path to php used by your desktop server. Find it by typing 'which php' on the command line."),
+  //   '#required' => TRUE,
+  // );
 
-  $form['sitepuller_tools_drush_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to drush'),
-    '#default_value' => variable_get('sitepuller_tools_drush_path', 'drush'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to drush used by your desktop server. Find it by typing 'which drush' on the command line."),
-    '#required' => TRUE,
-  );
+  // $form['sitepuller_tools_drush_path'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Path to drush'),
+  //   '#default_value' => variable_get('sitepuller_tools_drush_path', 'drush'),
+  //   '#size' => 60,
+  //   '#maxlength' => 255,
+  //   '#description' => t("Path to drush used by your desktop server. Find it by typing 'which drush' on the command line."),
+  //   '#required' => TRUE,
+  // );
 
-  $form['sitepuller_tools_mysql_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to mysql'),
-    '#default_value' => variable_get('sitepuller_tools_mysql_path', 'mysql'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to mysql used by your desktop server. Find it by typing 'which mysql' on the command line."),
-    '#required' => TRUE,
-  );
+  // $form['sitepuller_tools_mysql_path'] = array(
+  //   '#type' => 'textfield',
+  //   '#title' => t('Path to mysql'),
+  //   '#default_value' => variable_get('sitepuller_tools_mysql_path', 'mysql'),
+  //   '#size' => 60,
+  //   '#maxlength' => 255,
+  //   '#description' => t("Path to mysql used by your desktop server. Find it by typing 'which mysql' on the command line."),
+  //   '#required' => TRUE,
+  // );
 
   $form['sitepuller_tools_preamble'] = array(
     '#type' => 'textarea',
