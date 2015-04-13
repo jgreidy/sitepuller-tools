@@ -30,7 +30,7 @@ function sitepuller_tools_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sitepuller_tools_admin'),
     'access arguments' => array('administer sitepuller_tools settings'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_CALLBACK,
    );
 
   return $items;
