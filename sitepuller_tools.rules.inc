@@ -191,6 +191,35 @@ function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory = 
 	return $path;
 }
 
+function _sitepuller_tools_task_check($node) {
+	$sitepuller_tools_message = array();
+	_sitepuller_tools_check_user();
+	$task_wrapper = entity_metadata_wrapper('node', $node);
+	$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+	$remote_site = node_load($remote_site_nid);
+	array_push($sitepuller_tools_message, _sitepuller_tools_remote_site_check($remote_site));
+	$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+	$local_site = node_load($local_site_nid);
+	$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
+	array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
+	$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
+	$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+	$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+	$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+
+	// return local and remote site info
+	$local_name = $local_site_wrapper->field_sitepuller_local_site_name->value();
+	$info['local']['name'] = $local_name;
+	$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
+	$info['local']['subsites'] = _sitepuller_tools_local_subsites($local_site_root);
+	$remote_name = $remote_site_wrapper->field_sitepuller_remote_site->value();
+	$info['remote']['name'] = $remote_name;
+	$info['remote']['machine'] = $remote_machine;
+	$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
+	$info['remote']['subsites'] = _sitepuller_tools_remote_subsites($ssh, $remote_root);
+	return $info;
+}
+
 function sitepuller_tools_action_save_task($node) {
 	$sitepuller_tools_message = array();
 	try {
