@@ -137,3 +137,70 @@ function sitepuller_tools_admin_validate($form, &$form_state) {
   $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
   // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
 }
+
+function sitepuller_tools_run_task($task_nid) {
+  try {
+    $node = node_load($task_nid);
+    if (empty($node) || $node->type != 'sitepuller_task') {
+      throw new Exception(t("sitepuller_tools expects sitepuller tasks"));
+      }
+    if(!function_exists('_sitepuller_tools_task_check')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+      }
+    $info = _sitepuller_tools_task_check($node);
+    dsm($info);
+    return drupal_get_form('sitepuller_tools_task_form', $info);
+    }
+  catch (Exception $e) {
+    $sitepuller_tools_message[] = $e->getMessage();
+    drupal_set_message(implode("\r ",$sitepuller_tools_message));
+    return FALSE;
+  }
+}
+
+function sitepuller_tools_task_form($form_state, $info, $info1) {
+  dsm($form_state);
+  dsm($info);
+  dsm($info1);
+  $form['name'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Name'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['name']['first'] = array(
+    '#type' => 'textfield',
+    '#title' => t('First name'),
+    '#required' => TRUE,
+    '#default_value' => "First name",
+    '#description' => "Please enter your first name.",
+    '#size' => 20,
+    '#maxlength' => 20,
+  );
+  $form['name']['last'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Last name'),
+    '#required' => TRUE,
+  );
+  $form['year_of_birth'] = array(
+    '#type' => 'textfield',
+    '#title' => "Year of birth",
+    '#description' => 'Format is "YYYY"',
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Submit',
+  );
+  return $form;
+}
+
+function sitepuller_tools_task_form_validate($form, &$form_state) {
+    $year_of_birth = $form_state['values']['year_of_birth'];
+    if ($year_of_birth && ($year_of_birth < 1900 || $year_of_birth > 2000)) {
+        form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
+    }
+  }
+
+function sitepuller_tools_task_form_submit($form, &$form_state) {
+    drupal_set_message(t('The form has been submitted.'));
+}
