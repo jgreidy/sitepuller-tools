@@ -112,6 +112,7 @@ function _sitepuller_tools_remote_site_check($node) {
 	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't connect to Drupal database for site '@name'", array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
+	$subsites = _sitepuller_tools_remote_subsites($ssh, $path);
 	return t("Validated remote site '@name'", array('@name' => $name));
 }
 
@@ -151,6 +152,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$output = _sitepuller_tools_local_cmds($cmd, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
+	$subsites = _sitepuller_tools_local_subsites($path);
 	return t("Validated local site '@name'", array('@name' => $name));
 }
 
@@ -435,7 +437,32 @@ function _sitepuller_tools_check_user() {
 	}
 }
 
-function _sitepuller_tools_local_drupal_version() {
+function _sitepuller_tools_local_subsites($local_site_root) {
+	$cmd[] = "cd $local_site_root";
+	$cmd[] = "ls sites/*/settings.php";
+	$out = _sitepuller_tools_local_cmds($cmd);
+	$subsites = array();
+	foreach ($out as $value) {
+		$parts = explode('/', $value);
+		if (!empty($parts[1])) {
+			$subsites[] = $parts[1];
+		}
+	}
+	return $subsites;
+}
 
+function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
+	$cmd[] = "cd $remote_site_root";
+	$cmd[] = "ls sites/*/settings.php";
+	$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+	$subsites = array();
+	foreach ($out as $value) {
+		$parts = explode('/', $value);
+		if (!empty($parts[1])) {
+			$subsites[] = $parts[1];
+		}
+	}
+	dsm($subsites);
+	return $subsites;
 }
 
