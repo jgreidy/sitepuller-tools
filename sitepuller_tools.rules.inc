@@ -348,7 +348,6 @@ function _sitepuller_tools_replace_local_db($task_nid, $local_subsite) {
 			"drush cc all",
 			);
 		$out = _sitepuller_tools_local_cmds($cmd);
-		dsm($out);
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("rsync via exec failed."), 'warning', FALSE);
@@ -374,7 +373,6 @@ function _sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_tem
 		);
 	try {
 		$out = _sitepuller_tools_local_cmds($cmd);
-		dsm($out);
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("rsync via exec failed."), 'warning', FALSE);
@@ -397,7 +395,6 @@ function _sitepuller_tools_get_db_connect_string($local_site_root) {
 			//"drush status --show-passwords",
 		);
 		$out = _sitepuller_tools_local_cmds($cmd);
-		dsm($out);
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("Can not get sql connect string for @site",
