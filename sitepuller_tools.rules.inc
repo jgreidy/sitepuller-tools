@@ -272,20 +272,20 @@ function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $loca
 
 	if ($pull_databases) {
 		// pull databases for specified subsites
-		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$remote_subsite");
-		$subsite_path = "$remote_root/sites/$local_subsite";
+		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$local_subsite");
+		$subsite_path = "$remote_root/sites/$remote_subsite";
 		_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
 	}
 
 	if ($pull_public) {
-		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$remote_subsite/files");
-		$subsite_path = "$remote_root/sites/$local_subsite";
+		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$local_subsite/files");
+		$subsite_path = "$remote_root/sites/$remote_subsite";
 		_sitepuller_tools_backup_subsite_public_files($ssh, $remote_root, $subsite_path, $temp_path);
 	}
 
 	if ($pull_private) {
-		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$remote_subsite/private/files");
-		$subsite_path = "$remote_root/sites/$local_subsite";
+		$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$local_subsite/private/files");
+		$subsite_path = "$remote_root/sites/$remote_subsite";
 		_sitepuller_tools_backup_subsite_private_files($ssh, $remote_root, $subsite_path, $temp_path);
 	}
 
