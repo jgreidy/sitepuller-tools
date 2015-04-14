@@ -136,7 +136,6 @@ function _sitepuller_tools_local_site_check($node) {
 	$name = $wrapper->field_sitepuller_local_site_name->value();
 	$tmp = $wrapper->field_sitepuller_local_tmp->value();
 	$path = $wrapper->field_sitepuller_local_site_root->value();
-	$connect = $wrapper->field_sitepuller_local_db_connec->value();
 	$use_make = $wrapper->field_sitepuller_use_make_file->value();
 	$make_file = $wrapper->field_sitepuller_drush_make_file ->value();
 	$preamble = variable_get('sitepuller_tools_preamble', '');
@@ -260,7 +259,6 @@ function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $loca
 	array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
 	$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
 	$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
-	$local_db_connect = $local_site_wrapper->field_sitepuller_local_db_connec->value();
 
 	$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
 	$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper);
