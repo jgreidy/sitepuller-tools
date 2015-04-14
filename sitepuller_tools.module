@@ -254,6 +254,7 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
     //     form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
     // }
   }
+  _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
 
 function sitepuller_tools_task_form_submit($form, &$form_state) {
     drupal_set_message(t('The form has been submitted.'));
