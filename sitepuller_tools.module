@@ -38,7 +38,7 @@ function sitepuller_tools_menu() {
    );
 
   $items['sitepuller_tools/%/run'] = array(
-    'title' => 'Sitepuller module settings',
+    'title' => 'Sitepuller Task Runner',
     'description' => 'Execute a Sitepuller task.',
     'access arguments' => array('execute sitepuller_tools tasks'),
     'type' => MENU_CALLBACK,
