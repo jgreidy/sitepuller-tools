@@ -150,6 +150,7 @@ function sitepuller_tools_run_task($task_nid) {
     $info = _sitepuller_tools_task_check($node);
     dsm($info);
     return drupal_get_form('sitepuller_tools_task_form', $info);
+
     }
   catch (Exception $e) {
     $sitepuller_tools_message[] = $e->getMessage();
