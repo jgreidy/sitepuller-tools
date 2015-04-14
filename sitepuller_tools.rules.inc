@@ -113,6 +113,7 @@ function _sitepuller_tools_remote_site_check($node) {
 	$directory = "test";
 	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
 	$subsites = _sitepuller_tools_remote_subsites($ssh, $path);
+	_sitepuller_tools_cache_remote_site($node->nid, $name, $mach, $subsites);
 	return t("Validated remote site '@name'", array('@name' => $name));
 }
 
@@ -153,6 +154,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
 	$subsites = _sitepuller_tools_local_subsites($path);
+	_sitepuller_tools_cache_local_site($node->nid, $name, $subsites);
 	return t("Validated local site '@name'", array('@name' => $name));
 }
 
@@ -495,19 +497,33 @@ function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
 	return $subsites;
 }
 
-function _sitepuller_tools_save_subsites($nid, $subsites) {
-	$subsites = _sitepuller_tools_load_subsites();
-	$subsites["$nid"] = $subsites;
-	$subsites_ser = serialize($subsites);
-	variable_set('sitepuller_tools_subsites', $subsites_ser);
+function _sitepuller_tools_cache_remote_site($nid, $name, $mach, $subsites) {
+	$cache = _sitepuller_tools_get_cached_data();
+	$cache['local']["$nid"] =  array('name' => $name, 'machine' => $mach, 'subsites' => $subsites);
+	_sitepuller_tools_set_cached_data($cache);
 }
 
-function _sitepuller_tools_load_subsites() {
-	$subsites_ser = variable_get('sitepuller_tools_subsites', '');
-	if (empty($subsites_ser)) {
-		$subsites = array();
-	}
-	else {
-		$subsites = unserialize($subsites_ser);
-	}
+function _sitepuller_tools_cache_local_site($nid, $name, $subsites) {
+	$cache = _sitepuller_tools_get_cached_data();
+	$cache['local']["$nid"] =  array('name' => $name, 'subsites' => $subsites);
+	_sitepuller_tools_set_cached_data($cache);
 }
+
+function _sitepuller_tools_get_cached_data() {
+	$my_data = $drupal_static(__FUNCTION__);
+	if (!isset($my_data)) {
+		if ($cache = cache_get('sitepuller_tools_data')) {
+			$my_data = $cache->data;
+		}
+		else {
+			$my_data = array();
+			_sitepuller_tools_set_cached_data($my_data);
+		}
+	}
+	return $my_data;
+}
+
+function _sitepuller_tools_set_cached_data($my_data) {
+	cache_set('sitepuller_tools_data', $my_data, 'cache');
+}
+
