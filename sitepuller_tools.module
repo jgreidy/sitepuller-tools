@@ -226,8 +226,12 @@ function sitepuller_tools_task_form($form_state) {
 }
 
 function sitepuller_tools_task_form_validate($form, &$form_state) {
+}
+
+function sitepuller_tools_task_form_submit($form, &$form_state) {
   dsm($form_state);
   $info = _sitepuller_tools_get_cached_data();
+  $task_nid = $info['current-task']['task'];
   $local_site_nid = $info['current-task']['local'];
   $remote_site_nid = $info['current-task']['remote'];
   $remote = $info['remote']["$remote_site_nid"];
