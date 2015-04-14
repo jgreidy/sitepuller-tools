@@ -395,24 +395,31 @@ function _sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local
 		drupal_set_message(t("rsync remote to local failed."), 'warning', FALSE);
 		throw $e;
 	}
-	return $local_site_root;
 }
 
-function _sitepuller_tools_replace_local_db($local_site_root, $local_subsite) {
-	$preamble = variable_get('sitepuller_tools_preamble', '');
-	$cmd = array (
-		"$preamble",
-		"cd $local_site_root/sites/$local_subsite",
-		"drush sql-drop",
-		"drush sql-cli < $local_temp/db/$local_subsite/database.sql",
-		"drush vset file_directory_path sites/default/files",
-		"drush vset file_directory_temp /tmp",
-		"drush vset file_private_path sites/default/private/files",
-		"drush vset file_public_path sites/default/files",
-		"drush vset file_temporary_path /tmp",
-		"drush cc all",
-		);
+function _sitepuller_tools_replace_local_db($task_nid, $local_subsite) {
 	try {
+		$node = node_load($task_nid);
+		$task_wrapper = entity_metadata_wrapper('node', $node);
+		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+		$local_site = node_load($local_site_nid);
+		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
+		$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
+		$local_temp = _sitepuller_tools_prepare_local_temp($local_site_wrapper);
+
+		$preamble = variable_get('sitepuller_tools_preamble', '');
+		$cmd = array (
+			"$preamble",
+			"cd $local_site_root/sites/$local_subsite",
+			"drush sql-drop",
+			"drush sql-cli < $local_temp/db/$local_subsite/database.sql",
+			"drush vset file_directory_path sites/default/files",
+			"drush vset file_directory_temp /tmp",
+			"drush vset file_private_path sites/default/private/files",
+			"drush vset file_public_path sites/default/files",
+			"drush vset file_temporary_path /tmp",
+			"drush cc all",
+			);
 		$out = _sitepuller_tools_local_cmds($cmd);
 		dsm($out);
 	}
