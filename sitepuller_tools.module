@@ -220,32 +220,46 @@ function sitepuller_tools_task_form($form_state) {
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Submit',
+    '#value' => 'Pull',
   );
+  $form['cancel'] = array(
+    '#type' => 'button',
+    '#value' => t('Cancel')
+  );
+
   return $form;
 }
 
 function sitepuller_tools_task_form_validate($form, &$form_state) {
+  dsm($form_state);
+  if ($form_state['values']['op'] == 'Cancel') {
+    drupal_goto('sitepuller-tasks');
+  }
 }
 
 function sitepuller_tools_task_form_submit($form, &$form_state) {
   dsm($form_state);
-  $info = _sitepuller_tools_get_cached_data();
-  $task_nid = $info['current-task']['task'];
-  $local_site_nid = $info['current-task']['local'];
-  $remote_site_nid = $info['current-task']['remote'];
-  $remote = $info['remote']["$remote_site_nid"];
-  $local = $info['local']["$local_site_nid"];
-  $index = $form_state['values']['remote_subsites'];
-  $remote_subsite = $remote['subsites']["$index"];
-  $index = $form_state['values']['local_subsites'];
-  $local_subsite = $local['subsites']["$index"];
-  dsm(array($remote_subsite, $local_subsite, $index));
+  if ($form_state['values']['op'] == 'Pull') {
+    $info = _sitepuller_tools_get_cached_data();
+    $task_nid = $info['current-task']['task'];
+    $local_site_nid = $info['current-task']['local'];
+    $remote_site_nid = $info['current-task']['remote'];
+    $remote = $info['remote']["$remote_site_nid"];
+    $local = $info['local']["$local_site_nid"];
+    $index = $form_state['values']['remote_subsites'];
+    $remote_subsite = $remote['subsites']["$index"];
+    $index = $form_state['values']['local_subsites'];
+    $local_subsite = $local['subsites']["$index"];
+    dsm(array($remote_subsite, $local_subsite, $index));
 
-  if(!function_exists('_sitepuller_tools_run_task')) {
-    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    if(!function_exists('_sitepuller_tools_run_task')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
+
+    drupal_set_message(t('The Sitepuller Task has been run.'));
   }
-  _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
-
-  drupal_set_message(t('The form has been submitted.'));
+  else {
+  }
+  $form_state['redirect'] = 'sitepuller-tasks';
 }
