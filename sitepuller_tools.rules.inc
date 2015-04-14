@@ -299,9 +299,9 @@ function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) 
 	try {
 		$remote_temp = _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite);
 
-		$local_site_root = _sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local_subsite);
+		_sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local_subsite);
 
-		_sitepuller_tools_replace_local_db($local_site_root, $local_subsite);
+		_sitepuller_tools_replace_local_db($task_nid, $local_subsite);
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("_sitepuller_tools_run_task failed."), 'warning', FALSE);
