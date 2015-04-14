@@ -484,13 +484,12 @@ function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
 			$subsites[] = $parts[1];
 		}
 	}
-	dsm($subsites);
 	return $subsites;
 }
 
 function _sitepuller_tools_cache_remote_site($nid, $name, $mach, $subsites) {
 	$cache = _sitepuller_tools_get_cached_data();
-	$cache['local']["$nid"] =  array('name' => $name, 'machine' => $mach, 'subsites' => $subsites);
+	$cache['remote']["$nid"] =  array('name' => $name, 'machine' => $mach, 'subsites' => $subsites);
 	_sitepuller_tools_set_cached_data($cache);
 }
 
@@ -500,21 +499,27 @@ function _sitepuller_tools_cache_local_site($nid, $name, $subsites) {
 	_sitepuller_tools_set_cached_data($cache);
 }
 
-function _sitepuller_tools_get_cached_data() {
-	$my_data = $drupal_static(__FUNCTION__);
-	if (!isset($my_data)) {
-		if ($cache = cache_get('sitepuller_tools_data')) {
-			$my_data = $cache->data;
-		}
-		else {
-			$my_data = array();
-			_sitepuller_tools_set_cached_data($my_data);
+function _sitepuller_tools_get_cached_data($new_data = FALSE) {
+	if ($new_data) {
+		cache_set('sitepuller_tools_data', $new_data, 'cache');
+		$my_data = $new_data;
+	}
+	else {
+		$my_data = &drupal_static(__FUNCTION__);
+		if (!isset($my_data)) {
+			if ($cache = cache_get('sitepuller_tools_data')) {
+				$my_data = $cache->data;
+			}
+			else {
+				$my_data = array();
+				cache_set('sitepuller_tools_data', $my_data, 'cache');
+			}
 		}
 	}
 	return $my_data;
 }
 
 function _sitepuller_tools_set_cached_data($my_data) {
-	cache_set('sitepuller_tools_data', $my_data, 'cache');
+	$new_data = _sitepuller_tools_get_cached_data($my_data);
 }
 
