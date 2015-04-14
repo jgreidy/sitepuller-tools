@@ -242,20 +242,10 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
   $local_subsite = $local['subsites']["$index"];
   dsm(array($remote_subsite, $local_subsite, $index));
 
-  $root = '/Users/jgr25/Sites/devdesktop/music';
-  $sub = "$root/sites/$local_subsite";
-  $out = _sitepuller_tools_get_db_connect_string($sub);
-  dsm(array($sub,$out));
-
-  form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
-    //_sitepuller_tools_get_db_connect_string
-    // $year_of_birth = $form_state['values']['year_of_birth'];
-    // if ($year_of_birth && ($year_of_birth < 1900 || $year_of_birth > 2000)) {
-    //     form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
-    // }
+  if(!function_exists('_sitepuller_tools_run_task')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
   }
   _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
 
-function sitepuller_tools_task_form_submit($form, &$form_state) {
-    drupal_set_message(t('The form has been submitted.'));
+  drupal_set_message(t('The form has been submitted.'));
 }
