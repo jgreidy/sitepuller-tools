@@ -212,80 +212,8 @@ function _sitepuller_tools_task_check($node) {
 }
 
 function sitepuller_tools_action_save_task($node) {
-	$sitepuller_tools_message = array();
 	try {
-		//_sitepuller_tools_task_check($node);
-		//return;
-		_sitepuller_tools_check_user();
-		$task_wrapper = entity_metadata_wrapper('node', $node);
-		// $subsites = $task_wrapper->field_sitepuller_subsites->value();
-		// if (empty($subsites)) {
-		// 	throw new Exception(t("Doing all subsites is not working yet. Please specify one or more subsites"));
-		// }
-		$subsites = array('default');
-		$pull_databases = $task_wrapper->field_sitepuller_pull_database->value();
-		$pull_code = $task_wrapper->field_sitepuller_pull_code->value();
-		$pull_public = $task_wrapper->field_sitepuller_pull_files->value();
-		$pull_private = $task_wrapper->field_sitepuller_pull_private->value();
-
-		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
-		$remote_site = node_load($remote_site_nid);
-		array_push($sitepuller_tools_message, _sitepuller_tools_remote_site_check($remote_site));
-		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
-		$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
-		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
-		$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
-
-		$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
-		$local_site = node_load($local_site_nid);
-		array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
-		$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
-		$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
-		$local_db_connect = $local_site_wrapper->field_sitepuller_local_db_connec->value();
-
-		$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
-		$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper);
-
-		if ($pull_code) {
-			//drupal core
-			$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code");
-			_sitepuller_tools_backup_code($ssh, $remote_root, $temp_path);
-		}
-
-		if ($pull_databases) {
-			// pull databases for specified subsites
-			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "db/$subsite");
-				$subsite_path = "$remote_root/sites/$subsite";
-				_sitepuller_tools_backup_db($ssh, $subsite_path, $temp_path);
-			}
-		}
-
-		if ($pull_public) {
-			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite/files");
-				$subsite_path = "$remote_root/sites/$subsite";
-				_sitepuller_tools_backup_subsite_public_files($ssh, $remote_root, $subsite_path, $temp_path);
-			}
-		}
-
-		if ($pull_private) {
-			foreach ($subsites as $delta => $subsite) {
-				$temp_path = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "code/sites/$subsite/private/files");
-				$subsite_path = "$remote_root/sites/$subsite";
-				_sitepuller_tools_backup_subsite_private_files($ssh, $remote_root, $subsite_path, $temp_path);
-			}
-		}
-
-		// copy the site to the local machine
-		$local_temp = _sitepuller_tools_prepare_local_temp($local_site_wrapper);
-		$local_user = variable_get('sitepuller_tools_user', '');
-		$cmd[] = "hostname";
-		$local_machine = _sitepuller_tools_local_cmds($cmd);
-		$local_machine = array_pop($local_machine);
-		unset($cmd);
-		_sitepuller_tools_rsync_exec($remote_user, $remote_machine, $remote_temp, $local_temp, $local_site_root,
-			$local_db_connect);
+		_sitepuller_tools_task_check($node);
 	}
 	catch (Exception $e) {
 		$sitepuller_tools_message[] = $e->getMessage();
