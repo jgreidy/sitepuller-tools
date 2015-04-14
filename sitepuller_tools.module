@@ -230,6 +230,7 @@ function sitepuller_tools_task_form_validate($form, &$form_state) {
     if ($year_of_birth && ($year_of_birth < 1900 || $year_of_birth > 2000)) {
         form_set_error('year_of_birth', 'Enter a year between 1900 and 2000.');
     }
+  $remote = $info['remote']["$remote_site_nid"];
   }
 
 function sitepuller_tools_task_form_submit($form, &$form_state) {
