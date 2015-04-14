@@ -148,8 +148,9 @@ function _sitepuller_tools_local_site_check($node) {
 	$cmd[0] = "test -d $path";
 	$output = _sitepuller_tools_local_cmds($cmd, t('directory does not exist: @dir', array('@dir' => $path)));
 	$cmd[0] = $preamble;
-	$cmd[] = "$connect -e 'exit'";
-	$output = _sitepuller_tools_local_cmds($cmd, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
+	$cmd[] = "cd $path";
+	$cmd[] = "drush status | grep Drupal";
+	$output = _sitepuller_tools_local_cmds($cmd); //, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
 	$subsites = _sitepuller_tools_local_subsites($path);
