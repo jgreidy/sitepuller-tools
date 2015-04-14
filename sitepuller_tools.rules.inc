@@ -214,14 +214,15 @@ function _sitepuller_tools_task_check($node) {
 function sitepuller_tools_action_save_task($node) {
 	$sitepuller_tools_message = array();
 	try {
-		_sitepuller_tools_task_check($node);
-		return;
+		//_sitepuller_tools_task_check($node);
+		//return;
 		_sitepuller_tools_check_user();
 		$task_wrapper = entity_metadata_wrapper('node', $node);
-		$subsites = $task_wrapper->field_sitepuller_subsites->value();
-		if (empty($subsites)) {
-			throw new Exception(t("Doing all subsites is not working yet. Please specify one or more subsites"));
-		}
+		// $subsites = $task_wrapper->field_sitepuller_subsites->value();
+		// if (empty($subsites)) {
+		// 	throw new Exception(t("Doing all subsites is not working yet. Please specify one or more subsites"));
+		// }
+		$subsites = array('default');
 		$pull_databases = $task_wrapper->field_sitepuller_pull_database->value();
 		$pull_code = $task_wrapper->field_sitepuller_pull_code->value();
 		$pull_public = $task_wrapper->field_sitepuller_pull_files->value();
