@@ -193,18 +193,31 @@ function sitepuller_tools_task_form($form_state) {
     '#collapsed' => FALSE,
   );
   $form['remote']['info'] = array(
-    '#markup' => t("Site @site on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
+    '#markup' => t("Site '@site' on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
    );
-  $form['name']['last'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Last name'),
-    '#required' => TRUE,
+  $form['remote']['remote_subsites'] = array(
+    '#type' => 'radios',
+    '#title' => t('Remote subsite to pull:'),
+    '#default_value' => 'default',
+    '#options' => $remote['subsites'],
+    );
+
+  $form['local'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Local Site'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
   );
-  $form['year_of_birth'] = array(
-    '#type' => 'textfield',
-    '#title' => "Year of birth",
-    '#description' => 'Format is "YYYY"',
-  );
+  $form['local']['info'] = array(
+    '#markup' => t("Site '@site' on this machine.", array('@site' => $local['name'])),
+   );
+  $form['local']['local_subsites'] = array(
+    '#type' => 'radios',
+    '#title' => t('Local subsite to replace:'),
+    '#default_value' => 'default',
+    '#options' => $local['subsites'],
+    );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Submit',
