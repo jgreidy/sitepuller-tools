@@ -311,6 +311,7 @@ function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) 
 }
 
 function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite) {
+	$sitepuller_tools_message = array();
 	$node = node_load($task_nid);
 	$task_wrapper = entity_metadata_wrapper('node', $node);
 	$pull_databases = $task_wrapper->field_sitepuller_pull_database->value();
