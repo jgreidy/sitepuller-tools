@@ -14,6 +14,10 @@ function sitepuller_tools_permission() {
       'title' => t('Configure Sitepuller user'),
       'description' => t('Describe the your user account on the local machine for Sitepuller.'),
     ),
+    'execute sitepuller_tools tasks' => array(
+      'title' => t('Execute Sitepuller tasks'),
+      'description' => t('Move sites to the local machine with Sitepuller.'),
+    ),
   );
 }
 
@@ -30,8 +34,17 @@ function sitepuller_tools_menu() {
     'page callback' => 'drupal_get_form',
     'page arguments' => array('sitepuller_tools_admin'),
     'access arguments' => array('administer sitepuller_tools settings'),
-    'type' => MENU_NORMAL_ITEM,
+    'type' => MENU_CALLBACK,
    );
+
+  $items['sitepuller_tools/%/run'] = array(
+    'title' => 'Sitepuller Task Runner',
+    'description' => 'Execute a Sitepuller task.',
+    'access arguments' => array('execute sitepuller_tools tasks'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'sitepuller_tools_run_task',
+    'page arguments' => array(1),
+  );
 
   return $items;
 
@@ -84,36 +97,6 @@ function sitepuller_tools_admin() {
     '#required' => TRUE,
   );
 
-  $form['sitepuller_tools_php_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to php'),
-    '#default_value' => variable_get('sitepuller_tools_php_path', 'php'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to php used by your desktop server. Find it by typing 'which php' on the command line."),
-    '#required' => TRUE,
-  );
-
-  $form['sitepuller_tools_drush_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to drush'),
-    '#default_value' => variable_get('sitepuller_tools_drush_path', 'drush'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to drush used by your desktop server. Find it by typing 'which drush' on the command line."),
-    '#required' => TRUE,
-  );
-
-  $form['sitepuller_tools_mysql_path'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Path to mysql'),
-    '#default_value' => variable_get('sitepuller_tools_mysql_path', 'mysql'),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Path to mysql used by your desktop server. Find it by typing 'which mysql' on the command line."),
-    '#required' => TRUE,
-  );
-
   $form['sitepuller_tools_preamble'] = array(
     '#type' => 'textarea',
     '#title' => t('Preamble to drush sessions.'),
@@ -153,4 +136,126 @@ function sitepuller_tools_admin_validate($form, &$form_state) {
 
   $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
   // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
+}
+
+function sitepuller_tools_run_task($task_nid) {
+  try {
+    $node = node_load($task_nid);
+    if (empty($node) || $node->type != 'sitepuller_task') {
+      throw new Exception(t("sitepuller_tools expects sitepuller tasks"));
+      }
+
+    // cache the current task nid, and local & remote nids for building the form
+    if(!function_exists('_sitepuller_tools_get_cached_data')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $info = _sitepuller_tools_get_cached_data();
+    $task = node_load($task_nid);
+    $task_wrapper = entity_metadata_wrapper('node', $task);
+    $remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+    if (empty($info['remote']["$remote_site_nid"])) {
+      throw new Exception(
+        t('Missing cached information for remote site. Please <a href="/node/@nid/edit">resave the Sitepuller Remote</a>.', array('@nid' => $remote_site_nid)));
+    }
+    $local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+    if (empty($info['local']["$local_site_nid"])) {
+      throw new Exception(t('Missing cached information for local site. Please <a href="/node/@nid/edit">resave the Sitepuller Local</a>.', array('@nid' => $local_site_nid)));
+    }
+    $info['current-task'] = array('task' => $task_nid, 'local' => $local_site_nid, 'remote' => $remote_site_nid);
+
+    _sitepuller_tools_set_cached_data($info);
+
+    return drupal_get_form('sitepuller_tools_task_form');
+    }
+  catch (Exception $e) {
+    $sitepuller_tools_message[] = $e->getMessage();
+    drupal_set_message(implode("\r ",$sitepuller_tools_message));
+    return array();
+  }
+}
+
+function sitepuller_tools_task_form($form_state) {
+  if(!function_exists('_sitepuller_tools_get_cached_data')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  $info = _sitepuller_tools_get_cached_data();
+  $task_nid = $info['current-task']['task'];
+  $local_site_nid = $info['current-task']['local'];
+  $remote_site_nid = $info['current-task']['remote'];
+  $remote = $info['remote']["$remote_site_nid"];
+  $local = $info['local']["$local_site_nid"];
+
+  $form['remote'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Remote Site'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['remote']['info'] = array(
+    '#markup' => t("Site '@site' on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
+   );
+  $form['remote']['remote_subsites'] = array(
+    '#type' => 'radios',
+    '#title' => t('Remote subsite to pull:'),
+    '#default_value' => 'default',
+    '#options' => $remote['subsites'],
+    );
+
+  $form['local'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Local Site'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+  $form['local']['info'] = array(
+    '#markup' => t("Site '@site' on this machine.", array('@site' => $local['name'])),
+   );
+  $form['local']['local_subsites'] = array(
+    '#type' => 'radios',
+    '#title' => t('Local subsite to replace:'),
+    '#default_value' => 'default',
+    '#options' => $local['subsites'],
+    );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Pull',
+  );
+  $form['cancel'] = array(
+    '#type' => 'button',
+    '#value' => t('Cancel')
+  );
+
+  return $form;
+}
+
+function sitepuller_tools_task_form_validate($form, &$form_state) {
+  if ($form_state['values']['op'] == 'Cancel') {
+    drupal_goto('sitepuller-tasks');
+  }
+}
+
+function sitepuller_tools_task_form_submit($form, &$form_state) {
+  if ($form_state['values']['op'] == 'Pull') {
+    $info = _sitepuller_tools_get_cached_data();
+    $task_nid = $info['current-task']['task'];
+    $local_site_nid = $info['current-task']['local'];
+    $remote_site_nid = $info['current-task']['remote'];
+    $remote = $info['remote']["$remote_site_nid"];
+    $local = $info['local']["$local_site_nid"];
+    $index = $form_state['values']['remote_subsites'];
+    $remote_subsite = $remote['subsites']["$index"];
+    $index = $form_state['values']['local_subsites'];
+    $local_subsite = $local['subsites']["$index"];
+
+    if(!function_exists('_sitepuller_tools_run_task')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
+
+    drupal_set_message(t('The Sitepuller Task has been run.'));
+  }
+  else {
+  }
+  $form_state['redirect'] = 'sitepuller-tasks';
 }
