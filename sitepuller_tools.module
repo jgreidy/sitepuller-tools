@@ -144,40 +144,53 @@ function sitepuller_tools_run_task($task_nid) {
     if (empty($node) || $node->type != 'sitepuller_task') {
       throw new Exception(t("sitepuller_tools expects sitepuller tasks"));
       }
-    if(!function_exists('_sitepuller_tools_task_check')) {
-      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-      }
-    $info = _sitepuller_tools_task_check($node);
-    dsm($info);
-    return drupal_get_form('sitepuller_tools_task_form', $info);
 
+    // cache the current task nid for building the form
+    if(!function_exists('_sitepuller_tools_get_cached_data')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $info = _sitepuller_tools_get_cached_data();
+    $info['current-task'] = $task_nid;
+    _sitepuller_tools_set_cached_data($info);
+
+    return drupal_get_form('sitepuller_tools_task_form');
     }
   catch (Exception $e) {
     $sitepuller_tools_message[] = $e->getMessage();
     drupal_set_message(implode("\r ",$sitepuller_tools_message));
-    return FALSE;
+    return array();
   }
 }
 
-function sitepuller_tools_task_form($form_state, $info, $info1) {
-  dsm($form_state);
+function sitepuller_tools_task_form($form_state) {
+  if(!function_exists('_sitepuller_tools_get_cached_data')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  $info = _sitepuller_tools_get_cached_data();
   dsm($info);
-  dsm($info1);
-  $form['name'] = array(
+  $task = node_load($info['current-task']);
+  $task_wrapper = entity_metadata_wrapper('node', $task);
+  $remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+  if (empty($info['remote']["$remote_site_nid"])) {
+    throw new Exception(
+      t('Missing cached information for remote site. Please <a href="/node/@nid/edit">resave the Sitepuller Remote</a>.', array('@nid' => $remote_site_nid)));
+  }
+  $remote = $info['remote']["$remote_site_nid"];
+  $local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+  if (empty($info['local']["$local_site_nid"])) {
+    throw new Exception(t('Missing cached information for local site. Please <a href="/node/@nid/edit">resave the Sitepuller Local</a>.', array('@nid' => $local_site_nid)));
+  }
+  $local = $info['local']["$local_site_nid"];
+
+  $form['remote'] = array(
     '#type' => 'fieldset',
-    '#title' => t('Name'),
+    '#title' => t('Remote Site'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $form['name']['first'] = array(
-    '#type' => 'textfield',
-    '#title' => t('First name'),
-    '#required' => TRUE,
-    '#default_value' => "First name",
-    '#description' => "Please enter your first name.",
-    '#size' => 20,
-    '#maxlength' => 20,
-  );
+  $form['remote']['info'] = array(
+    '#markup' => t("Site @site on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
+   );
   $form['name']['last'] = array(
     '#type' => 'textfield',
     '#title' => t('Last name'),
