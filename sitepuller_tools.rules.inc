@@ -261,18 +261,174 @@ function sitepuller_tools_action_save_task($node) {
 }
 
 function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) {
+
 	try {
-		$remote_temp = _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite);
+		$batch = array(
+			'title' => t("Sitepuller moving site"),
+			'operations' => array(
+				array('_sitepuller_tools_build_remote_archive', array($task_nid)),
+				array('_sitepuller_tools_move_remote_archive', array($task_nid)),
+				),
+			'finished' => '_sitepuller_tools_finish_batch',
+			'file' => "__FILE__",
+			);
+		batch_set($batch);
 
-		_sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local_subsite);
+		// $remote_archive = _sitepuller_tools_build_remote_archive($task_nid);
 
-		_sitepuller_tools_replace_local_db($task_nid, $local_subsite);
+		// $local_archive = _sitepuller_tools_move_remote_archive($task_nid, $remote_archive);
+		// throw new Exception("stop with $remote_archive, $local_archive", 1);
+
+
+		// $remote_temp = _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite);
+
+		// _sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local_subsite);
+
+		// _sitepuller_tools_replace_local_db($task_nid, $local_subsite);
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("_sitepuller_tools_run_task failed."), 'warning', FALSE);
 		throw $e;
 	}
 
+}
+
+function _sitepuller_tools_finish_batch($success, $results, $operations) {
+  // The 'success' parameter means no fatal PHP errors were detected. All
+  // other error management should be handled using 'results'.
+  dsm($results);
+  if ($success) {
+    $message = t('_sitepuller_tools_finish_batch');
+  }
+  else {
+    $message = t('Finished with an error.');
+  }
+  drupal_set_message($message);
+  // Providing data for the redirected page is done through $_SESSION.
+  foreach ($results as $result) {
+    $items[] = t('Loaded node %title.', array('%title' => $result));
+  }
+  $_SESSION['my_batch_results'] = $items;
+}
+
+function _sitepuller_tools_build_remote_archive($task_nid, &$context) {
+  try {
+  	throw new Exception("Error Processing Request", 1);
+
+	  if (!isset($context['sandbox']['progress'])) {
+	    $context['sandbox']['progress'] = 0;
+	    $context['sandbox']['current_node'] = 0;
+	    $context['sandbox']['max'] = 10;
+	    $context['sandbox']['messages'] = array();
+	  }
+		$node = node_load($task_nid);
+		$task_wrapper = entity_metadata_wrapper('node', $node);
+
+		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+		$remote_site = node_load($remote_site_nid);
+		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
+		$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+		$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
+		$remote_site = $remote_site_wrapper->field_sitepuller_remote_site->value();
+
+		$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+		$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "archive");
+
+		$remote_archive = "$remote_temp/$remote_site.tar";
+		$cmd = array(
+			"cd $remote_root ; drush archive-dump @sites --overwrite --destination=$remote_archive ; gzip -f $remote_archive "
+			);
+		_sitepuller_tools_ssh_cmds($ssh, $cmd);
+
+		$remote_archive .= ".gz";
+
+		$cmd = array(
+			"test -f $remote_archive"
+			);
+		$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+
+		$sftp = _sitepuller_tools_get_sftp($remote_machine, $remote_user);
+		$filesize = $sftp->size($remote_archive);
+		$context['sandbox']['max'] = $filesize;
+
+		dsm("made remote: $remote_archive");
+
+		$context['results'][] = t("built remote archive @file", array('@file' => $remote_archive));
+		$context['message'] = t('build remote archive');
+
+		$context['sandbox']['sitepuller'] = array('filesize' => $filesize, 'start_at' => 0, 'remote_archive' => $remote_archive);
+
+	  // Inform the batch engine that we are not finished,
+	  // and provide an estimation of the completion level we reached.
+	  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+	    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+	  }
+	}
+	catch (Exception $e) {
+		drupal_set_message(t("@msg", array('@msg' => $e->message)), 'warning', FALSE);
+		drupal_set_message(t("_sitepuller_tools_build_remote_archive failed."), 'warning', FALSE);
+		throw $e;
+	}
+}
+
+function _sitepuller_tools_move_remote_archive($task_nid, &$context) {
+	$remote_archive = $context['sandbox']['sitepuller']['remote_archive'];
+
+	$node = node_load($task_nid);
+	$task_wrapper = entity_metadata_wrapper('node', $node);
+	$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+	$remote_site = node_load($remote_site_nid);
+	$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
+	$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+	$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+	$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
+
+	$local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+	$local_site = node_load($local_site_nid);
+	$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
+	$local_site_root = $local_site_wrapper->field_sitepuller_local_site_root->value();
+	$local_site_name = $local_site_wrapper->field_sitepuller_local_site_name->value();
+	$local_temp = _sitepuller_tools_prepare_local_temp($local_site_wrapper, "archive");
+
+	$local_archive = "$local_temp/$local_site_name.tar.gz";
+
+	$sftp = _sitepuller_tools_get_sftp($remote_machine, $remote_user);
+	$filesize = $context['sandbox']['sitepuller']['filesize'];
+	$start_at = $context['sandbox']['sitepuller']['start_at'];
+	$block_size = 1024;
+	$block_count = 10;
+	$end_at = min($filesize, $start_at + $block_count * $block_size);
+
+	for ($start = $start_at; $start < $end_at; $start += $block_size) {
+		$len = min($block_size, $start - $filesize);
+		$success = $sftp->get($remote_archive, $local_archive, $start, $len);
+		if ($success === FALSE) {
+			throw new Exception("Failed to move $remote_subsite to $local_archive", 1);
+		}
+	}
+
+	$context['sandbox']['progress'] = $end_at;
+	if ($end_at == $filesize) {
+		$context['message'] = t('copied to local archive @file', array('@file' => $local_archive));
+		$context['sandbox']['sitepuller']['local_archive'] = $local_archive;
+	}
+	else {
+		$context['message'] = t('Copied @count', array('@count' => $end_at));
+	}
+
+	// $cmd = array(
+	// 	"whoami"
+	// 	//"scp $remote_user@$remote_machine:$remote_archive $local_archive"
+	// 	);
+	// $out = _sitepuller_tools_local_cmds($cmd);
+	// dsm($out);
+
+  // Inform the batch engine that we are not finished,
+  // and provide an estimation of the completion level we reached.
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
 }
 
 function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite) {
