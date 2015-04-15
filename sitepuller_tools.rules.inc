@@ -270,7 +270,7 @@ function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) 
 				array('_sitepuller_tools_move_remote_archive', array($task_nid)),
 				),
 			'finished' => '_sitepuller_tools_finish_batch',
-			'file' => "__FILE__",
+			'file' => __FILE__,
 			);
 		batch_set($batch);
 
@@ -364,6 +364,9 @@ function _sitepuller_tools_build_remote_archive($task_nid, &$context) {
 	  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
 	    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
 	  }
+	  else {
+	  	$context['finished'] = 0;
+	  }
 	}
 	catch (Exception $e) {
 		drupal_set_message(t("@msg", array('@msg' => $e->message)), 'warning', FALSE);
@@ -397,7 +400,7 @@ function _sitepuller_tools_move_remote_archive($task_nid, &$context) {
 	$filesize = $context['sandbox']['sitepuller']['filesize'];
 	$start_at = $context['sandbox']['sitepuller']['start_at'];
 	$block_size = 1024;
-	$block_count = 10;
+	$block_count = 1;
 	$end_at = min($filesize, $start_at + $block_count * $block_size);
 
 	for ($start = $start_at; $start < $end_at; $start += $block_size) {
@@ -429,6 +432,9 @@ function _sitepuller_tools_move_remote_archive($task_nid, &$context) {
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
+  else {
+  	$context['finished'] = 0;
+	  }
 }
 
 function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite) {
