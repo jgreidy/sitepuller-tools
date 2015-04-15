@@ -509,9 +509,22 @@ function _sitepuller_tools_rsync_remote_to_local($task_nid, $remote_temp, $local
 		$local_temp = _sitepuller_tools_prepare_local_temp($local_site_wrapper);
 		$local_user = variable_get('sitepuller_tools_user', '');
 
+		// see http://stackoverflow.com/questions/3504945/timeout-command-on-max-os-x
+		// bres install coreutils
+		// then use gtimeout
+		$timeout = 60 * 30; // seconds
 		$cmd = array (
-			"rsync -asz --delete -e ssh $remote_user@$remote_machine:$remote_temp/ $local_temp/",
-			"rsync -acz --exclude=sites $local_temp/code/ $local_site_root/",
+			"gtimeout $timeout whoami",
+			);
+		$out = _sitepuller_tools_local_cmds($cmd);
+
+		$cmd = array (
+			"rsync -acz $remote_user@$remote_machine:$remote_temp/ $local_temp/",
+			);
+		$out = _sitepuller_tools_local_cmds($cmd);
+
+		$cmd = array (
+			"rsync -acz --exclude=/.htaccess --exclude=sites --delete $local_temp/code/ $local_site_root/",
 			"rsync -acz --exclude=sites/*/settings.php --include=sites/$local_subsite --include=sites/all --include=sites/default/files --exclude=sites/* $local_temp/code/sites/ $local_site_root/sites/",
 			);
 		$out = _sitepuller_tools_local_cmds($cmd);
