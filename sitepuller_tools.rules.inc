@@ -97,6 +97,43 @@ function _sitepuller_tools_get_ssh($machine, $remote_user) {
 	return $ssh;
 }
 
+/**
+ * open an sftp connection to the machine
+ * 	machine - string - name of remote machine
+ *	remote_user - string - user to log in as on remote machines
+ *
+ *  returns Net_SFTP ssh object or FALSE
+ */
+function _sitepuller_tools_get_sftp($machine, $remote_user) {
+	$rsa_private = variable_get('sitepuller_tools_private_key_file', '');
+	$passphrase = variable_get('sitepuller_tools_passphrase', 'the old one'); // encrypted
+	$entropy = variable_get('sitepuller_tools_entropy_file', '');
+
+	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
+		throw new Exception(t("can't read contents of entropy file"));
+	}
+	$hash = sha1($entropy_file);
+	$cipher = new Crypt_Blowfish();
+	$cipher->setKey($hash);
+	$packed = pack("H*" , $passphrase);
+	$decrypted = $cipher->decrypt($packed);
+
+	if (($keyfile = file_get_contents($rsa_private)) === FALSE) {
+		throw new Exception(t("can't read contents of private key file"));
+	}
+
+	$key = new Crypt_RSA();
+	$key->setPassword($decrypted);
+	$key->loadKey($keyfile);
+
+	$sftp = new Net_SFTP("$machine");
+	if (!$sftp->login($remote_user, $key)) {
+		throw new Exception(t("can't sftp to @mac as @user", array('@mac' => $machine, '@user' => $remote_user)));
+	}
+
+	return $sftp;
+}
+
 function _sitepuller_tools_remote_site_check($node) {
 	$wrapper = entity_metadata_wrapper('node', $node);
 
