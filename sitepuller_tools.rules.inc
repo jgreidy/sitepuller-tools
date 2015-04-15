@@ -482,6 +482,11 @@ function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $loca
 		_sitepuller_tools_backup_subsite_private_files($ssh, $remote_root, $subsite_path, $temp_path);
 	}
 
+	$cmd = array(
+		"test -d $remote_temp"
+		);
+	$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+
 	return $remote_temp;
 }
 
