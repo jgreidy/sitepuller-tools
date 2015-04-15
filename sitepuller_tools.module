@@ -259,3 +259,25 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'sitepuller-tasks';
 }
+
+function _sitepuller_tools_x_build_remote_archive($task_nid, &$context) {
+  if(!function_exists('_sitepuller_tools_build_remote_archive')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  _sitepuller_tools_x_build_remote_archive($task_nid, $context);
+}
+
+function _sitepuller_tools_x_move_remote_archive($task_nid, &$context) {
+  if(!function_exists('_sitepuller_tools_move_remote_archive')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  _sitepuller_tools_move_remote_archive($task_nid, $context);
+}
+
+function _sitepuller_tools_x_finish_batch($success, $results, $operations) {
+  if(!function_exists('_sitepuller_tools_finish_batch')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  _sitepuller_tools_finish_batch($success, $results, $operations);
+}
+
