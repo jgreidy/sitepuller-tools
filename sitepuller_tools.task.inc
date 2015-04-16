@@ -37,11 +37,12 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
       throw new Exception("Invalid task step number", 1);
     }
 
+    $task = _sitepuller_tools_info_task($task_nid);
+    //dsm($task);
+
     $step = $context['sandbox']['step'];
     switch ($major_steps["$major_step"]) {
       case "delete old archive":
-        $context['message'] = t('Deleting old archive.');
-        $task = _sitepuller_tools_info_task($task_nid);
         $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
         $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
         _sitepuller_tools_delete_remote_path($ssh, $remote['tarball']);
@@ -50,11 +51,30 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
           _sitepuller_tools_delete_remote_path($ssh, $remote['stash']);
           $context['results'][] = t('Deleted old archive');
         }
-        break;
+      break;
+
+      case 'archive core':
+        if ($task['pull_drupal']) {
+          $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+          $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+          _sitepuller_tools_pull_drupal_core($ssh, $remote['stash'], $remote['root']);
+          $context['results'][] = t('Archived Drupal core');
+        }
+      break;
+
+      case 'archive sites/all':
+        if ($task['pull_code']) {
+          $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+          $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+          _sitepuller_tools_pull_code($ssh, $remote['stash'], $remote['root']);
+          $context['results'][] = t('Archived Drupal core');
+        }
+      break;
 
       default:
-        throw new Exception(t('Unknown task step: @step', array('@step' => $major_steps["$major_step"])), 1);
-        break;
+        $context['results'][] = t('unknown step: @step', array ('@step' => $major_steps["$major_step"]));
+        //throw new Exception(t('Unknown task step: @step', array('@step' => $major_steps["$major_step"])), 1);
+      break;
     }
     $context['sandbox']['step']++;
 
@@ -63,33 +83,36 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
     $context['finished'] = ($context['sandbox']['major_step'] + ($context['sandbox']['step'] / $context['sandbox']['step_count'])) / $context['sandbox']['major_step_count'];
 
     if ($context['sandbox']['step'] >= $context['sandbox']['step_count']) {
-      $context['sandbox']['major_step']++;
+      $next = ++$context['sandbox']['major_step'];
       $context['sandbox']['step'] = 0;
       $context['sandbox']['step_count'] = 1;
+      $context['message'] = empty($major_steps["$next"]) ? 'done' : $major_steps["$next"];
     }
   }
   catch (Exception $e) {
     $context['finished'] = 1.0;
-    $context['message'] = $e->getMessage();
-    $current_set = &_batch_current_set();
-    $current_set['success'] = FALSE;
-    throw $e;
+    $context['results']['error'] = $e->getMessage();
   }
 }
 
 function sitepuller_tools_perform_task_final($success, $results, $operations) {
-  if ($success) {
+  if ($success && empty($results['error'])) {
     // Here we do something meaningful with the results.
-    $message = t('@count items successfully processed:', array('@count' => count($results)));
+    $message = t('@count steps successfully taken:', array('@count' => count($results)));
     // $message .= theme('item_list', $results);  // D6 syntax
     $message .= theme('item_list', array('items' => $results));
     drupal_set_message($message);
   }
   else {
     // An error occurred.
-    // $operations contains the operations that remained unprocessed.
-    $error_operation = reset($operations);
-    $message = t('An error occurred while processing %error_operation with arguments: @arguments', array('%error_operation' => $error_operation[0], '@arguments' => print_r($error_operation[1], TRUE)));
+    $error = $results['error'];
+    unset ($results['error']);
+    if (count($results) > 0) {
+      $message = t('Finished these steps:');
+      $message .= theme('item_list', array('items' => $results));
+      drupal_set_message($message);
+    }
+    $message = t('An error occurred: %error_operation', array('%error_operation' => $error));
     drupal_set_message($message, 'error');
   }
  }
@@ -99,4 +122,24 @@ function _sitepuller_tools_delete_remote_path($ssh, $remote_path) {
     'rm --force --recursive "' . $remote_path . '"',
     );
   _sitepuller_tools_ssh_cmds($ssh, $cmd);
+}
+
+function _sitepuller_tools_pull_drupal_core($ssh, $remote_path, $site_root) {
+  $target = "$remote_path/core";
+  $cmd = array(
+    "mkdir -p $target",
+    "test -d $target",
+    "rsync -acz --exclude=sites --delete $site_root/ $target/",
+    );
+  $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+}
+
+function _sitepuller_tools_pull_code($ssh, $remote_path, $site_root) {
+  $target = "$remote_path/sites/all";
+  $cmd = array(
+    "mkdir -p $target",
+    "test -d $target",
+    "rsync -acz --exclude=sites --delete $site_root/sites/all/ $target/",
+    );
+  $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
 }

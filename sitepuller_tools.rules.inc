@@ -285,91 +285,46 @@ function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) 
 
 }
 
-function _sitepuller_tools_finish_batch($success, $results, $operations) {
-  // The 'success' parameter means no fatal PHP errors were detected. All
-  // other error management should be handled using 'results'.
-  dsm($results);
-  if ($success) {
-    $message = t('_sitepuller_tools_finish_batch');
-  }
-  else {
-    $message = t('Finished with an error.');
-  }
-  drupal_set_message($message);
-  // Providing data for the redirected page is done through $_SESSION.
-  foreach ($results as $result) {
-    $items[] = t('Loaded node %title.', array('%title' => $result));
-  }
-  $_SESSION['my_batch_results'] = $items;
+function _sitepuller_tools_build_remote_archive($task_nid) {
+	$node = node_load($task_nid);
+	$task_wrapper = entity_metadata_wrapper('node', $node);
+
+	$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+	$remote_site = node_load($remote_site_nid);
+	$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
+	$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
+	$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
+	$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
+	$remote_site = $remote_site_wrapper->field_sitepuller_remote_site->value();
+
+	$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+	$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "archive");
+
+	$remote_archive = "$remote_temp/$remote_site.tar";
+	$cmd = array(
+		"cd $remote_root ; drush archive-dump @sites --overwrite --destination=$remote_archive",
+		);
+	_sitepuller_tools_ssh_cmds($ssh, $cmd);
+
+	$remote_archive .= ".gz"; // gzipped and added to file name by archive-dump
+
+	$cmd = array(
+		"test -f $remote_archive"
+		);
+	$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+
+	dsm("made remote: $remote_archive");
+
+	return $remote_archive;
 }
 
-function _sitepuller_tools_build_remote_archive($task_nid, &$context) {
-  try {
-  	throw new Exception("Error Processing Request", 1);
-
-	  if (!isset($context['sandbox']['progress'])) {
-	    $context['sandbox']['progress'] = 0;
-	    $context['sandbox']['current_node'] = 0;
-	    $context['sandbox']['max'] = 10;
-	    $context['sandbox']['messages'] = array();
-	  }
-		$node = node_load($task_nid);
-		$task_wrapper = entity_metadata_wrapper('node', $node);
-
-		$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
-		$remote_site = node_load($remote_site_nid);
-		$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
-		$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
-		$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
-		$remote_root = $remote_site_wrapper->field_sitepuller_remote_root->value();
-		$remote_site = $remote_site_wrapper->field_sitepuller_remote_site->value();
-
-		$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
-		$remote_temp = _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, "archive");
-
-		$remote_archive = "$remote_temp/$remote_site.tar";
-		$cmd = array(
-			"cd $remote_root ; drush archive-dump @sites --overwrite --destination=$remote_archive ; gzip -f $remote_archive "
-			);
-		_sitepuller_tools_ssh_cmds($ssh, $cmd);
-
-		$remote_archive .= ".gz";
-
-		$cmd = array(
-			"test -f $remote_archive"
-			);
-		$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
-
-		$sftp = _sitepuller_tools_get_sftp($remote_machine, $remote_user);
-		$filesize = $sftp->size($remote_archive);
-		$context['sandbox']['max'] = $filesize;
-
-		dsm("made remote: $remote_archive");
-
-		$context['results'][] = t("built remote archive @file", array('@file' => $remote_archive));
-		$context['message'] = t('build remote archive');
-
-		$context['sandbox']['sitepuller'] = array('filesize' => $filesize, 'start_at' => 0, 'remote_archive' => $remote_archive);
-
-	  // Inform the batch engine that we are not finished,
-	  // and provide an estimation of the completion level we reached.
-	  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
-	    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
-	  }
-	  else {
-	  	$context['finished'] = 0;
-	  }
-	}
-	catch (Exception $e) {
-		drupal_set_message(t("@msg", array('@msg' => $e->message)), 'warning', FALSE);
-		drupal_set_message(t("_sitepuller_tools_build_remote_archive failed."), 'warning', FALSE);
-		throw $e;
-	}
-}
-
-function _sitepuller_tools_move_remote_archive($task_nid, &$context) {
-	$remote_archive = $context['sandbox']['sitepuller']['remote_archive'];
-
+function _sitepuller_tools_move_remote_archive($task_nid, $remote_archive, &$context) {
+  if (!isset($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['current_node'] = $task_nid;
+    $context['sandbox']['max'] = 100;
+  }
+  dsm($context);
 	$node = node_load($task_nid);
 	$task_wrapper = entity_metadata_wrapper('node', $node);
 	$remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
@@ -814,3 +769,46 @@ function _sitepuller_tools_set_cached_data($my_data) {
 	$new_data = _sitepuller_tools_get_cached_data($my_data);
 }
 
+function _sitepuller_tools_info_task($task_nid) {
+	$info = array();
+	$node = node_load($task_nid);
+	$task_wrapper = entity_metadata_wrapper('node', $node);
+	$info['local_site_nid'] = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
+	$info['local_subsite'] =  $task_wrapper->field_sitepuller_task_local_sub->value();
+	$info['pull_code'] =  $task_wrapper->field_sitepuller_pull_code->value();
+	$info['pull_database'] =  $task_wrapper->field_sitepuller_pull_database->value();
+	$info['pull_drupal'] =  $task_wrapper->field_sitepuller_pull_drupal->value();
+	$info['pull_files'] =  $task_wrapper->field_sitepuller_pull_files->value();
+	$info['pull_private'] =  $task_wrapper->field_sitepuller_pull_private->value();
+	$info['remote_site_nid'] = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
+	$info['remote_subsite'] =  $task_wrapper->field_sitepuller_task_remo_sub->value();
+	return $info;
+}
+
+function _sitepuller_tools_info_remote($remote_site_nid) {
+	$info = array();
+	$node = node_load($remote_site_nid);
+	$wrapper = entity_metadata_wrapper('node', $node);
+	$info['host'] = $wrapper->field_sitepuller_remote_host->value();
+	$info['root'] = $wrapper->field_sitepuller_remote_root->value();
+	$info['site_name'] = $wrapper->field_sitepuller_remote_site->value();
+	$info['tmp'] = $wrapper->field_sitepuller_remote_tmp->value();
+	$info['user'] = $wrapper->field_sitepuller_remote_user->value();
+	$info['stash'] = $info['tmp'] . '/sitepuller/' . $info['site_name'] . '/stash';
+	$info['tarball'] = $info['stash'] . '.tar.gz';
+	return $info;
+	}
+
+function _sitepuller_tools_info_local($local_site_nid) {
+	$info = array();
+	$node = node_load($local_site_nid);
+	$wrapper = entity_metadata_wrapper('node', $node);
+	$info['drush_make_file'] = $wrapper->field_sitepuller_drush_make_file->value();
+	$info['site_name'] = $wrapper->field_sitepuller_local_site_name->value();
+	$info['site_root'] = $wrapper->field_sitepuller_local_site_root->value();
+	$info['tmp'] = $wrapper->field_sitepuller_local_tmp->value();
+	$info['use_make_file'] = $wrapper->field_sitepuller_use_make_file->value();
+	$info['stash'] = $info['tmp'] . '/sitepuller/' . $info['site_name'] . '/stash';
+	$info['tarball'] = $info['stash'] . '.tar.gz';
+	return $info;
+}
