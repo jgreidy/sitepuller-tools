@@ -253,30 +253,32 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
     $index = $form_state['values']['local_subsites'];
     $local_subsite = $local['subsites']["$index"];
 
-    if(!function_exists('_sitepuller_tools_run_task')) {
-      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    }
-    _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
+    $inc_path = drupal_get_path('module', 'sitepuller_tools') . '/sitepuller_tools.task.inc' ;
+    $remote_archive = '/tmp/sitepuller/music.test2.library.cornell.edu/jgr25/archive/music.test2.library.cornell.edu.tar.gz';
+
+    $batch = array(
+      'operations' => array(
+        array('sitepuller_tools_perform_task', array($task_nid, $remote_subsite, $local_subsite, $form_state)),
+        ),
+      'title' => t('Processing Sitepuller Task'),
+      'init_message' => t('Task is starting.'),
+      'progress_message' => t('Processed @current out of @total.'),
+      'error_message' => t('Sitepuller Task has encountered an error.'),
+      'file' => $inc_path,
+      'finished' =>  'sitepuller_tools_perform_task_final',
+       );
+    batch_set($batch);
+
+    // if(!function_exists('_sitepuller_tools_run_task')) {
+    //   module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    // }
+    // _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
 
     drupal_set_message(t('The Sitepuller Task has been run.'));
   }
   else {
   }
   $form_state['redirect'] = 'sitepuller-tasks';
-}
-
-function _sitepuller_tools_x_build_remote_archive($task_nid, &$context) {
-  if(!function_exists('_sitepuller_tools_build_remote_archive')) {
-    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-  }
-  _sitepuller_tools_x_build_remote_archive($task_nid, $context);
-}
-
-function _sitepuller_tools_x_move_remote_archive($task_nid, &$context) {
-  if(!function_exists('_sitepuller_tools_move_remote_archive')) {
-    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-  }
-  _sitepuller_tools_move_remote_archive($task_nid, $context);
 }
 
 function _sitepuller_tools_x_finish_batch($success, $results, $operations) {
