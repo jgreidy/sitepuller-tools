@@ -263,20 +263,12 @@ function sitepuller_tools_action_save_task($node) {
 function _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite) {
 
 	try {
-		$batch = array(
-			'title' => t("Sitepuller moving site"),
-			'operations' => array(
-				array('_sitepuller_tools_build_remote_archive', array($task_nid)),
-				array('_sitepuller_tools_move_remote_archive', array($task_nid)),
-				),
-			'finished' => '_sitepuller_tools_finish_batch',
-			'file' => __FILE__,
-			);
-		batch_set($batch);
 
-		// $remote_archive = _sitepuller_tools_build_remote_archive($task_nid);
+		//$remote_archive = _sitepuller_tools_build_remote_archive($task_nid);
+		$remote_archive = '/tmp/sitepuller/music.test2.library.cornell.edu/jgr25/archive/music.test2.library.cornell.edu.tar.gz';
 
-		// $local_archive = _sitepuller_tools_move_remote_archive($task_nid, $remote_archive);
+		$local_archive = _sitepuller_tools_move_remote_archive($task_nid, $remote_archive);
+
 		// throw new Exception("stop with $remote_archive, $local_archive", 1);
 
 
@@ -396,45 +388,68 @@ function _sitepuller_tools_move_remote_archive($task_nid, &$context) {
 
 	$local_archive = "$local_temp/$local_site_name.tar.gz";
 
-	$sftp = _sitepuller_tools_get_sftp($remote_machine, $remote_user);
-	$filesize = $context['sandbox']['sitepuller']['filesize'];
-	$start_at = $context['sandbox']['sitepuller']['start_at'];
-	$block_size = 1024;
-	$block_count = 1;
-	$end_at = min($filesize, $start_at + $block_count * $block_size);
-
-	for ($start = $start_at; $start < $end_at; $start += $block_size) {
-		$len = min($block_size, $start - $filesize);
-		$success = $sftp->get($remote_archive, $local_archive, $start, $len);
-		if ($success === FALSE) {
-			throw new Exception("Failed to move $remote_subsite to $local_archive", 1);
-		}
-	}
-
-	$context['sandbox']['progress'] = $end_at;
-	if ($end_at == $filesize) {
-		$context['message'] = t('copied to local archive @file', array('@file' => $local_archive));
-		$context['sandbox']['sitepuller']['local_archive'] = $local_archive;
-	}
-	else {
-		$context['message'] = t('Copied @count', array('@count' => $end_at));
-	}
+	//$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+	// $cmd = array(
+	// 	"scp $remote_user@$remote_machine:$remote_archive $local_archive"
+	// 	);
+	// _sitepuller_tools_local_cmds($cmd);
 
 	// $cmd = array(
-	// 	"whoami"
-	// 	//"scp $remote_user@$remote_machine:$remote_archive $local_archive"
+	// 	"whoami",
+	// 	"hostname"
+	// 	);
+	// $out = _sitepuller_tools_local_cmds($cmd);
+	// $local_user = $out[0];
+	// $local_machine = $out[1];
+
+//$local_user@$local_machine:
+//
+	// $ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
+	// $cmd = array(
+	// 	"rsync -acz -e ssh $remote_user@$remote_machine:$remote_archive $local_temp/",
 	// 	);
 	// $out = _sitepuller_tools_local_cmds($cmd);
 	// dsm($out);
+
+	$sftp = _sitepuller_tools_get_sftp($remote_machine, $remote_user);
+	// $success = $sftp->get($remote_archive, $local_archive);
+	// if ($success === FALSE) {
+	// 	throw new Exception("Failed to move $remote_subsite to $local_archive", 1);
+	// }
+
+	if (empty($context['sandbox']['filesize'])) {
+		$filesize = $sftp->size($remote_archive);
+		dsm("Filesize: $filesize");
+		$context['sandbox']['filesize'] = $filesize;
+		$context['sandbox']['max'] = $filesize;
+	}
+	else {
+		$filesize = $context['sandbox']['filesize'];
+	}
+
+	$start_at = $context['sandbox']['current_node'];
+	$block_size = 1024;
+	$blocks_per_run = 10;
+	$run_max = max($filesize, $start_at + $block_size * $blocks_per_run);
+
+	for ($start = $start_at; $start < $run_max; $start += $block_size) {
+		$len = min($block_size, $start - $filesize);
+		//$success = $sftp->get($remote_archive, $local_archive, $start, $len);
+		$success = TRUE;
+		if ($success === FALSE) {
+			throw new Exception("Failed to move $remote_subsite to $local_archive", 1);
+		}
+		$context['sandbox']['progress'] = $start;
+		$context['sandbox']['message'] = "$start / $filesize";
+	}
 
   // Inform the batch engine that we are not finished,
   // and provide an estimation of the completion level we reached.
   if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
     $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
   }
-  else {
-  	$context['finished'] = 0;
-	  }
+
+	return $local_archive;
 }
 
 function _sitepuller_tools_build_remote_backup($task_nid, $remote_subsite, $local_subsite) {
