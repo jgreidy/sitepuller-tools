@@ -200,6 +200,11 @@ function sitepuller_tools_task_form($form_state) {
     '#default_value' => 'default',
     '#options' => $remote['subsites'],
     );
+  $form['remote']['fresh_copy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Delete any previous archive before starting'),
+    '#default_value' => FALSE,
+    );
 
   $form['local'] = array(
     '#type' => 'fieldset',
