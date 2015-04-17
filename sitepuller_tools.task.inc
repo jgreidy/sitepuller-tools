@@ -375,3 +375,80 @@ function _sitepuller_tools_find_private_files_path($ssh, $site_path, $subsite_pa
   $realpath = $ssh->exec($cmd);
   return $realpath;
 }
+
+/**
+ * this scp fails
+ * An error occurred: Error on cmd: 'scp jgr25@victoria02.library.cornell.edu:/tmp/sitepuller/music.test2.library.cornell.edu/stash.tar.gz /Users/jgr25/Sites/backups/sitepuller/music/stash.tar.gz' ; exit '1'
+ * @param  [type] $remote [description]
+ * @param  [type] $local  [description]
+ * @return [type]         [description]
+ */
+function _sitepuller_tools_local_scp_copy($remote, $local) {
+  $remote_archive = $remote['tarball'];
+  $local_archive = $local['tarball'];
+  $remote_user = $remote['user'];
+  $remote_machine = $remote['host'];
+  $cmd = array(
+   "scp $remote_user@$remote_machine:$remote_archive $local_archive"
+   );
+  $out = _sitepuller_tools_local_cmds($cmd);
+  dsm($out);
+}
+/**
+ * this rsync fails
+ * An error occurred: Error on cmd: 'rsync -acz -e ssh jgr25@victoria02.library.cornell.edu:/tmp/sitepuller/music.test2.library.cornell.edu/stash/ /Users/jgr25/Sites/backups/sitepuller/music/stash/' ; exit '255'
+ * @param  [type] $remote [description]
+ * @param  [type] $local  [description]
+ * @return [type]         [description]
+ */
+function _sitepuller_tools_local_rsync_copy($remote, $local) {
+  $remote_archive = $remote['stash'];
+  $local_archive = $local['stash'];
+  $remote_user = $remote['user'];
+  $remote_machine = $remote['host'];
+  $cmd = array(
+   "rsync -acz -e ssh $remote_user@$remote_machine:$remote_archive/ $local_archive/"
+   );
+  $out = _sitepuller_tools_local_cmds($cmd);
+  dsm($out);
+}
+
+/**
+ * this rsync fails
+ * An error occurred: Error on step: 'rsync -acz -e ssh jgr25@victoria02.library.cornell.edu:/tmp/sitepuller/music.test2.library.cornell.edu/stash/ /Users/jgr25/Sites/backups/sitepuller/music/stash/' ; exit '255' ; error 'Permission denied, please try again. Received disconnect from 132.236.27.167: 2: Too many authentication failures for jgr25 rsync: connection unexpectedly closed (0 bytes received so far) [receiver] rsync error: unexplained error (code 255) at io.c(600) [receiver=3.0.6] '
+ * @param  [type] $ssh    [description]
+ * @param  [type] $remote [description]
+ * @param  [type] $local  [description]
+ * @return [type]         [description]
+ */
+function _sitepuller_tools_remote_rsync_copy_old($ssh, $remote, $local) {
+  $remote_archive = $remote['stash'];
+  $local_archive = $local['stash'];
+  $remote_user = $remote['user'];
+  $remote_machine = $remote['host'];
+  $cmd = array(
+    "rsync -acz -e ssh $remote_user@$remote_machine:$remote_archive/ $local_archive/"
+    );
+  $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+  dsm($out);
+}
+
+/**
+ * this rsync fails
+ * An error occurred: Error on step: 'rsync -acz -e ssh /tmp/sitepuller/music.test2.library.cornell.edu/stash/ jgr25@Jamess-MacBook-Air.local:/Users/jgr25/Sites/backups/sitepuller/music/stash/' ; exit '12' ; error 'ssh: Jamess-MacBook-Air.local: Name or service not known rsync: connection unexpectedly closed (0 bytes received so far) [sender] rsync error: error in rsync protocol data stream (code 12) at io.c(600) [sender=3.0.6] '
+ * @param  [type] $ssh    [description]
+ * @param  [type] $remote [description]
+ * @param  [type] $local  [description]
+ * @return [type]         [description]
+ */
+function _sitepuller_tools_remote_rsync_copy($ssh, $remote, $local) {
+  $remote_archive = $remote['stash'];
+  $local_archive = $local['stash'];
+  $remote_user = $remote['user'];
+  $remote_machine = $remote['host'];
+  $cmd = array(
+    "rsync -acz -e ssh $remote_archive/ jgr25@Jamess-MacBook-Air.local:$local_archive/"
+    );
+  $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+  dsm($out);
+}
