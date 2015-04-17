@@ -256,8 +256,6 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
     $inc_path = drupal_get_path('module', 'sitepuller_tools') . '/sitepuller_tools.task.inc' ;
     $remote_archive = '/tmp/sitepuller/music.test2.library.cornell.edu/jgr25/archive/music.test2.library.cornell.edu.tar.gz';
 
-    dsm($form_state);
-
     $batch = array(
       'operations' => array(
         array('sitepuller_tools_perform_task', array($task_nid, $remote_subsite, $local_subsite, $form_state)),

@@ -47,7 +47,6 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
     }
 
     $task = _sitepuller_tools_info_task($task_nid);
-    //dsm($task);
 
     $step = $context['sandbox']['step'];
     switch ($major_steps["$major_step"]) {
