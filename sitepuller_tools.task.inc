@@ -257,7 +257,6 @@ function _sitepuller_tools_move_tarball($remote, $local, &$context) {
   $file = fopen($local['tarball'], 'ab');
   $bytes_written = fwrite($file, $block);
   fclose($file);
-  //$bytes_written = file_put_contents($local['tarball'], $block, FILE_APPEND);
   if ($bytes_written === FALSE || $bytes_written != $len) {
     throw new Exception("short block written", 1);
   }
@@ -276,7 +275,7 @@ function _sitepuller_tools_move_tarball($remote, $local, &$context) {
 
   }
   $context['sandbox']['download']['current_block']++;
-  $context['message'] = t('Copied @count of @n blocks from @rh.', array(
+  $context['message'] = t('Copying @count of @n blocks from @rh.', array(
     '@count' => $context['sandbox']['download']['current_block'],
     '@n' => $context['sandbox']['download']['full_blocks'] + 1,
     '@rh' => $remote['host'],
