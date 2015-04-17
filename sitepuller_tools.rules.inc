@@ -661,6 +661,7 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsit
 	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path)));
 }
 
+// obsolete
 function _sitepuller_tools_backup_subsite_private_files($ssh, $site_path, $subsite_path, $temp_directory) {
 	$cmd = "cd $subsite_path ; drush vget file_private_path";
 	$out7 = $ssh->exec($cmd);
