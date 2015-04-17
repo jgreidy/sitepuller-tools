@@ -22,6 +22,7 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
       "stash sites/default",
       "stash subsites",
       "compress stash",
+      "delete local stash",
       "move stash to local",
       "decompress stash",
       "install core",
@@ -108,10 +109,27 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
           $context['results'][] = t('Compressed stash into @tb', array('@tb' => $remote['tarball']));
       break;
 
+      case "delete local stash":
+        $local = _sitepuller_tools_info_local($task['local_site_nid']);
+        _sitepuller_tools_delete_local_path($local['tarball']);
+        $context['results'][] = t('Deleted old local tarball');
+        if ($form_state['values']['fresh_copy']) {
+          _sitepuller_tools_delete_local_path($local['stash']);
+          $context['results'][] = t('Deleted old local stash');
+        }
+        // make sure directory exists
+        $cmd = array('mkdir -p ' . $local['stash']);
+        _sitepuller_tools_local_cmds($cmd);
+        $context['results'][] = t('Deleted local stash');
+      break;
+
       case "move stash to local":
         $local = _sitepuller_tools_info_local($task['local_site_nid']);
         $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
-        _sitepuller_tools_move_tarball($remote, $local, &$context);
+        //hack
+        // $remote['tarball'] = '/tmp/sitepuller/music.test2.library.cornell.edu/text.txt';
+        // $local['tarball'] = '/Users/jgr25/Sites/backups/sitepuller/music/text.txt';
+        _sitepuller_tools_move_tarball($remote, $local, $context);
       break;
 
       default:
