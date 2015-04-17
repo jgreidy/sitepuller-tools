@@ -318,6 +318,7 @@ function _sitepuller_tools_build_remote_archive($task_nid) {
 	return $remote_archive;
 }
 
+//obsolete
 function _sitepuller_tools_move_remote_archive($task_nid, $remote_archive, &$context) {
   if (!isset($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
