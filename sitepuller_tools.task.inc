@@ -161,6 +161,48 @@ function sitepuller_tools_perform_task_final($success, $results, $operations) {
   }
  }
 
+_sitepuller_tools_move_tarball($remote, $local, $context) {
+  $step = $context['sandbox']['step'];
+  $sftp = _sitepuller_tools_get_sftp($remote['host'], $remote['user']);
+  if ($step == 0) {
+    $filesize = $sftp->size($remote['tarball']);
+    $blocksize = 1024 * 512;
+    $full_blocks = floor($filesize / $blocksize);
+    $last_block_size = $filesize - ($full_blocks * $blocksize);
+    $download = array(
+      'filesize' => $filesize,
+      'blocksize' => $blocksize,
+      'full_blocks' => $full_blocks,
+      'last_block_size' => $last_block_size,
+      'current_block' => 0,
+      );
+    $context['sandbox']['step_count'] = $full_blocks + 1 + 1;
+    $context['sandbox']['download'] = $download;
+  }
+  else {
+    $start = $context['sandbox']['download']['current_block']++ * $context['sandbox']['download']['blocksize'];
+    if ($context['sandbox']['download']['current_block'] < $context['sandbox']['download']['full_blocks']) {
+      $len = $context['sandbox']['download']['blocksize'];
+    }
+    else {
+      // last block may be shorter
+      $len = $context['sandbox']['download']['last_block_size'];
+      $context['results'][] = t('Moved tarball to @tb', array('@tb' => $local['tarball']));
+    }
+    $block = $sftp->get($remote['tarball'], FALSE, $start, $len);
+    if ($block === FALSE) {
+      throw new Exception(t("Failed to pull @rt from @rh",
+        array('@rt' => $remote['tarball'], '@rh' => $remote['host'])), 1);
+    }
+  }
+  $context['message'] = t('Copied @count of @n blocks from @rh.', array(
+    '@count' => $context['sandbox']['download']['current_block'],
+    '@n' => $context['sandbox']['download']['full_blocks'] + 1,
+    '@rh' => $remote['host'],
+    ));
+
+}
+
 function _sitepuller_tools_delete_remote_path($ssh, $remote_path) {
   $cmd = array(
     'rm --force --recursive "' . $remote_path . '"',
