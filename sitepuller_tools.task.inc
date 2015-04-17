@@ -282,7 +282,7 @@ function _sitepuller_tools_find_public_files_path($ssh, $site_path, $subsite_pat
     }
   }
   $path = $site_path . '/' . $match[1];
-  $cmd = "php -r 'echo realpath(\"$path\");'"
+  $cmd = "php -r 'echo realpath(\"$path\");'";
   $realpath = $ssh->exec($cmd);
   return $realpath;
 }
@@ -297,7 +297,7 @@ function _sitepuller_tools_find_private_files_path($ssh, $site_path, $subsite_pa
     throw new Exception(t("Failed to determine private file path for @s", array('@s' => $subsite_path)));
     }
   $path = $site_path . '/' . $match[1];
-  $cmd = "php -r 'echo realpath(\"$path\");'"
+  $cmd = "php -r 'echo realpath(\"$path\");'";
   $realpath = $ssh->exec($cmd);
   return $realpath;
 }
