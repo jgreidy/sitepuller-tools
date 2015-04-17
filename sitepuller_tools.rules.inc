@@ -798,8 +798,11 @@ function _sitepuller_tools_info_remote($remote_site_nid) {
 	$info['site_name'] = $wrapper->field_sitepuller_remote_site->value();
 	$info['tmp'] = $wrapper->field_sitepuller_remote_tmp->value();
 	$info['user'] = $wrapper->field_sitepuller_remote_user->value();
-	$info['stash'] = $info['tmp'] . '/sitepuller/' . $info['site_name'] . '/stash';
-	$info['tarball'] = $info['stash'] . '.tar.gz';
+	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
+	$info['stash_name'] = 'stash';
+	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
+	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
+	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
 	return $info;
 	}
 
@@ -812,7 +815,10 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info['site_root'] = $wrapper->field_sitepuller_local_site_root->value();
 	$info['tmp'] = $wrapper->field_sitepuller_local_tmp->value();
 	$info['use_make_file'] = $wrapper->field_sitepuller_use_make_file->value();
-	$info['stash'] = $info['tmp'] . '/sitepuller/' . $info['site_name'] . '/stash';
-	$info['tarball'] = $info['stash'] . '.tar.gz';
+	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
+	$info['stash_name'] = 'stash';
+	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
+	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
+	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
 	return $info;
 }
