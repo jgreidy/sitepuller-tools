@@ -101,8 +101,9 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
       case "compress stash":
         $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
         $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+        $target = $remote['stash_dir'];
         $cmd = array(
-          "tar -czf " . $remote['tarball'] . " " . $remote['stash'],
+          "cd $target; tar -czf " . $remote['tarball_name'] . " " . $remote['stash_name'],
           );
          _sitepuller_tools_ssh_cmds($ssh, $cmd, t('Failed to compress @stash into @tarball',
           array('@stash' => $remote['stash'], '@tarball' => $remote['tarball'])));
