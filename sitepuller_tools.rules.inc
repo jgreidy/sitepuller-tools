@@ -625,6 +625,7 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
 	return $output;
 }
 
+//obsolete
 function _sitepuller_tools_backup_db($ssh, $site, $directory) {
 	$cmd[] = "cd $site ; drush sql-dump --ordered-dump > $directory/database.sql";
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
@@ -637,6 +638,7 @@ function _sitepuller_tools_backup_code($ssh, $site, $directory) {
 	_sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
 
+//obsolete
 function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsite_path, $temp_directory) {
 	$cmd = "cd $subsite_path ; drush vget file_public_path";
 	$out7 = $ssh->exec($cmd);
