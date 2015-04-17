@@ -149,7 +149,7 @@ function sitepuller_tools_perform_task_final($success, $results, $operations) {
   }
   else {
     // An error occurred.
-    $error = $results['error'];
+    $error = empty($results['error']) ? t('error') : $results['error'];
     unset ($results['error']);
     if (count($results) > 0) {
       $message = t('Finished these steps:');
