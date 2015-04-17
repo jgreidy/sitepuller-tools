@@ -127,10 +127,32 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
       case "move stash to local":
         $local = _sitepuller_tools_info_local($task['local_site_nid']);
         $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
-        //hack
-        // $remote['tarball'] = '/tmp/sitepuller/music.test2.library.cornell.edu/text.txt';
-        // $local['tarball'] = '/Users/jgr25/Sites/backups/sitepuller/music/text.txt';
         _sitepuller_tools_move_tarball($remote, $local, $context);
+        if ($context['sandbox']['step'] >= $context['sandbox']['step_count']) {
+          $context['results'][] = t('Moved stash to the local machine.');
+        }
+      break;
+
+      case "decompress stash":
+        $local = _sitepuller_tools_info_local($task['local_site_nid']);
+        $cmd = array(
+          "cd " . $local['stash_dir'],
+          "tar -zxvf " . $local['tarball_name'],
+          );
+        _sitepuller_tools_local_cmds($cmd);
+        $context['results'][] = t('Decompressed tarball.');
+      break;
+
+      case "install core":
+        if ($task['pull_drupal']) {
+          $local = _sitepuller_tools_info_local($task['local_site_nid']);
+          $source = $local['stash'] . '/code';
+          $target = $local['site_root'];
+          $cmd = array(
+            "rsync -acz $source/ $target/",
+            );
+          _sitepuller_tools_local_cmds($cmd);
+        }
       break;
 
       default:
