@@ -235,31 +235,31 @@ function _sitepuller_tools_pull_subsite($ssh, $remote_path, $site_root, $subsite
   $subsite_path = "$site_root/sites/$subsite";
 
   if ($task['pull_files']) {
-    $public = _sitepuller_tools_find_public_files_path($ssh, $site_root, $subsite_path)
+    $public = _sitepuller_tools_find_public_files_path($ssh, $site_root, $subsite_path);
     $target_path = "$target/files";
     $cmd = array(
       "mkdir -p $target_path",
       "test -d $target_path",
       "rsync -avcz --delete $public/ $target_path/"
       );
-    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path));
+    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path)));
   }
   if ($task['pull_pivate']) {
-    $private = _sitepuller_tools_find_private_files_path($ssh, $site_root, $subsite_path)
+    $private = _sitepuller_tools_find_private_files_path($ssh, $site_root, $subsite_path);
     $target_path = "$target/private/files";
     $cmd = array(
       "mkdir -p $target_path",
       "test -d $target_path",
       "rsync -avcz --delete $private/ $target_path/"
       );
-    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path));
+    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path)));
   }
   if ($task['pull_database']) {
     $target_path = "$target/database";
     $cmd = array(
       "mkdir -p $target_path",
       "test -d $target_path",
-      "cd $site ; drush sql-dump --ordered-dump > $target_path/database.sql"
+      "cd $subsite_path ; drush sql-dump --ordered-dump > $target_path/database.sql"
       );
     $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
   }
