@@ -58,7 +58,7 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
           $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
           $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
           _sitepuller_tools_pull_drupal_core($ssh, $remote['stash'], $remote['root']);
-          $context['results'][] = t('Archived Drupal core');
+          $context['results'][] = t('Stashed Drupal core');
         }
       break;
 
@@ -67,8 +67,16 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
           $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
           $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
           _sitepuller_tools_pull_code($ssh, $remote['stash'], $remote['root']);
-          $context['results'][] = t('Archived Drupal core');
+          $context['results'][] = t('Stashed sites/all');
         }
+      break;
+
+      case "archive sites/default":
+          $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+          $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+          _sitepuller_tools_pull_subsite($ssh, $remote['stash'], $remote['root'],
+            'default', $task);
+          $context['results'][] = t('Stashed sites/default');
       break;
 
       default:
