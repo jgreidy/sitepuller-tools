@@ -178,46 +178,86 @@ function sitepuller_tools_perform_task_final($success, $results, $operations) {
   }
  }
 
-_sitepuller_tools_move_tarball($remote, $local, $context) {
+function _sitepuller_tools_move_tarball($remote, $local, &$context) {
   $step = $context['sandbox']['step'];
   $sftp = _sitepuller_tools_get_sftp($remote['host'], $remote['user']);
   if ($step == 0) {
+
+    // compute checksum of original file
+    $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+    $cmd = array("cksum " . $remote['tarball'] . " | cut -d ' '  -f 1");
+    $cksum = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+    $cksum = trim(array_pop($cksum));
+
+    // get filesize & compute blocking factors
     $filesize = $sftp->size($remote['tarball']);
+    if ($filesize === FALSE) {
+      throw new Exception(t('No such file as @tar', array('@tar' => $remote['tarball'])), 1);
+    }
     $blocksize = 1024 * 512;
-    $full_blocks = floor($filesize / $blocksize);
-    $last_block_size = $filesize - ($full_blocks * $blocksize);
+    $full_blocks = (int) floor($filesize / $blocksize);
+    $last_block_size = (int) $filesize - ($full_blocks * $blocksize);
     $download = array(
       'filesize' => $filesize,
       'blocksize' => $blocksize,
       'full_blocks' => $full_blocks,
       'last_block_size' => $last_block_size,
       'current_block' => 0,
+      'checksum' => $cksum,
       );
-    $context['sandbox']['step_count'] = $full_blocks + 1 + 1;
+    $context['sandbox']['step_count'] = $full_blocks + 1;
     $context['sandbox']['download'] = $download;
   }
-  else {
-    $start = $context['sandbox']['download']['current_block']++ * $context['sandbox']['download']['blocksize'];
-    if ($context['sandbox']['download']['current_block'] < $context['sandbox']['download']['full_blocks']) {
-      $len = $context['sandbox']['download']['blocksize'];
-    }
-    else {
-      // last block may be shorter
-      $len = $context['sandbox']['download']['last_block_size'];
-      $context['results'][] = t('Moved tarball to @tb', array('@tb' => $local['tarball']));
-    }
-    $block = $sftp->get($remote['tarball'], FALSE, $start, $len);
-    if ($block === FALSE) {
-      throw new Exception(t("Failed to pull @rt from @rh",
-        array('@rt' => $remote['tarball'], '@rh' => $remote['host'])), 1);
-    }
+
+  $start = $context['sandbox']['download']['current_block'] * $context['sandbox']['download']['blocksize'];
+  if ($context['sandbox']['download']['current_block'] < $context['sandbox']['download']['full_blocks']) {
+    $len = $context['sandbox']['download']['blocksize'];
+    $last_block = FALSE;
   }
+  else {
+    // last block may be shorter
+    $len = $context['sandbox']['download']['last_block_size'];
+    $context['sandbox']['download']['current_block'];
+    $last_block = TRUE;
+  }
+  $block = $sftp->get($remote['tarball'], FALSE, $start, $len);
+  if ($block === FALSE) {
+    throw new Exception(t("Failed to pull @rt from @rh. Block starting @st, length @len, file size @last,",
+      array('@rt' => $remote['tarball'],
+        '@rh' => $remote['host'],
+        '@st' => $start,
+        '@len' => $len,
+        '@last' => $context['sandbox']['download']['filesize'],
+        )
+      ), 1);
+  }
+  $file = fopen($local['tarball'], 'ab');
+  $bytes_written = fwrite($file, $block);
+  fclose($file);
+  //$bytes_written = file_put_contents($local['tarball'], $block, FILE_APPEND);
+  if ($bytes_written === FALSE || $bytes_written != $len) {
+    throw new Exception("short block written", 1);
+  }
+  if ($last_block) {
+    $cmd = array("cksum " . $local['tarball'] . " | cut -d ' '  -f 1");
+    $cksum = _sitepuller_tools_local_cmds($cmd);
+    $cksum = trim(array_pop($cksum));
+
+    if (strcmp($cksum, $context['sandbox']['download']['checksum']) != 0) {
+      throw new Exception(t('Checksum comparison failed: remote @rck ; local @lck', array(
+        '@rck' => $context['sandbox']['download']['checksum'],
+        '@lck' => $cksum,
+        )), 1);
+    }
+    $context['results'][] = t('Moved tarball to @tb', array('@tb' => $local['tarball']));
+
+  }
+  $context['sandbox']['download']['current_block']++;
   $context['message'] = t('Copied @count of @n blocks from @rh.', array(
     '@count' => $context['sandbox']['download']['current_block'],
     '@n' => $context['sandbox']['download']['full_blocks'] + 1,
     '@rh' => $remote['host'],
     ));
-
 }
 
 function _sitepuller_tools_delete_remote_path($ssh, $remote_path) {
