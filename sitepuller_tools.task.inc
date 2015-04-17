@@ -151,3 +151,75 @@ function _sitepuller_tools_pull_code($ssh, $remote_path, $site_root) {
     );
   $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
+
+function _sitepuller_tools_pull_subsite($ssh, $remote_path, $site_root, $subsite, $task) {
+  $target = "$remote_path/sites/$subsite";
+  $subsite_path = "$site_root/sites/$subsite";
+
+  if ($task['pull_files']) {
+    $public = _sitepuller_tools_find_public_files_path($ssh, $site_root, $subsite_path)
+    $target_path = "$target/files";
+    $cmd = array(
+      "mkdir -p $target_path",
+      "test -d $target_path",
+      "rsync -avcz --delete $public/ $target_path/"
+      );
+    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path));
+  }
+  if ($task['pull_pivate']) {
+    $private = _sitepuller_tools_find_private_files_path($ssh, $site_root, $subsite_path)
+    $target_path = "$target/private/files";
+    $cmd = array(
+      "mkdir -p $target_path",
+      "test -d $target_path",
+      "rsync -avcz --delete $private/ $target_path/"
+      );
+    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path));
+  }
+  if ($task['pull_database']) {
+    $target_path = "$target/database";
+    $cmd = array(
+      "mkdir -p $target_path",
+      "test -d $target_path",
+      "cd $site ; drush sql-dump --ordered-dump > $target_path/database.sql"
+      );
+    $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
+  }
+}
+
+function _sitepuller_tools_find_public_files_path($ssh, $site_path, $subsite_path) {
+  // Drupal 7 version of public files
+  $cmd = "cd $subsite_path ; drush vget file_public_path";
+  $out7 = $ssh->exec($cmd);
+  $match = array();
+  preg_match("/file_public_path: \"([^\"]+)\"/", $out7, $match);
+  if (empty($match)) {
+    // try for Drupal 6 version
+    $cmd = "cd $subsite_path ; drush vget file_directory_path";
+    $out6 = $ssh->exec($cmd);
+    $match = array();
+    preg_match("/file_directory_path: \"([^\"]+)\"/", $out6, $match);
+    if (empty($match)) {
+      throw new Exception(t("Failed to determine public file path for @s in @p", array('@s' => $subsite_path, '@p' => $out6)));
+    }
+  }
+  $path = $site_path . '/' . $match[1];
+  $cmd = "php -r 'echo realpath(\"$path\");'"
+  $realpath = $ssh->exec($cmd);
+  return $realpath;
+}
+
+function _sitepuller_tools_find_private_files_path($ssh, $site_path, $subsite_path) {
+  // only available for Drupal 7 sites
+  $cmd = "cd $subsite_path ; drush vget file_private_path";
+  $out7 = $ssh->exec($cmd);
+  $match = array();
+  preg_match("/file_private_path: \"([^\"]+)\"/", $out7, $match);
+  if (empty($match)) {
+    throw new Exception(t("Failed to determine private file path for @s", array('@s' => $subsite_path)));
+    }
+  $path = $site_path . '/' . $match[1];
+  $cmd = "php -r 'echo realpath(\"$path\");'"
+  $realpath = $ssh->exec($cmd);
+  return $realpath;
+}
