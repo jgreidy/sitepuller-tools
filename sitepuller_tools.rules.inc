@@ -650,7 +650,7 @@ function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsit
 		$match = array();
 		preg_match("/file_directory_path: \"([^\"]+)\"/", $out6, $match);
 		if (empty($match)) {
-			throw new Exception(t("Failed to determine public file path for @s", array('@s' => $subsite_path)));
+			throw new Exception(t("Failed to determine public file path for @s in @p", array('@s' => $subsite_path, '@p' => $out6)));
 		}
 	}
 	$path = $site_path . '/' . $match[1];
