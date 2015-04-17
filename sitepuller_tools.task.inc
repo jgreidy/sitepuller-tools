@@ -4,17 +4,26 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
+/**
+ * batch processor for moving pulling Drupal site to local machine
+ * @param  integer $task_nid       node id od sitepuller task
+ * @param  string $remote_subsite name of selected subsite on remote machine
+ * @param  string $local_subsite  name of corresponding subsite on local machine
+ * @param  array $form_state     from task form
+ * @param  array &$context       batch api info
+ * @return exception                 throws exception to stop batch process on error
+ */
 function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsite, $form_state, &$context) {
   try {
     $major_steps = array(
-      "delete old archive",
-      "archive core",
-      "archive sites/all",
-      "archive sites/default",
-      "archive subsites",
-      "compress archive",
-      "move archive to local",
-      "decompress archive",
+      "delete old stash",
+      "stash core",
+      "stash sites/all",
+      "stash sites/default",
+      "stash subsites",
+      "compress stash",
+      "move stash to local",
+      "decompress stash",
       "install core",
       "install sites/all",
       "install sites/default",
@@ -42,18 +51,18 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
 
     $step = $context['sandbox']['step'];
     switch ($major_steps["$major_step"]) {
-      case "delete old archive":
+      case "delete old stash":
         $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
         $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
         _sitepuller_tools_delete_remote_path($ssh, $remote['tarball']);
-        $context['results'][] = t('Deleted tarball');
+        $context['results'][] = t('Deleted old tarball');
         if ($form_state['values']['fresh_copy']) {
           _sitepuller_tools_delete_remote_path($ssh, $remote['stash']);
-          $context['results'][] = t('Deleted old archive');
+          $context['results'][] = t('Deleted old stash');
         }
       break;
 
-      case 'archive core':
+      case 'stash core':
         if ($task['pull_drupal']) {
           $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
           $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
@@ -62,7 +71,7 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
         }
       break;
 
-      case 'archive sites/all':
+      case 'stash sites/all':
         if ($task['pull_code']) {
           $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
           $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
@@ -71,12 +80,39 @@ function sitepuller_tools_perform_task($task_nid, $remote_subsite, $local_subsit
         }
       break;
 
-      case "archive sites/default":
+      case "stash sites/default":
           $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
           $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
           _sitepuller_tools_pull_subsite($ssh, $remote['stash'], $remote['root'],
             'default', $task);
           $context['results'][] = t('Stashed sites/default');
+      break;
+
+      case "stash subsites":
+        if ($remote_subsite != 'default') {
+          $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+          $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+          _sitepuller_tools_pull_subsite($ssh, $remote['stash'], $remote['root'],
+            $remote_subsite, $task);
+          $context['results'][] = t('Stashed sites/@ss', array('@ss' => $remote_subsite));
+        }
+      break;
+
+      case "compress stash":
+        $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+        $ssh = _sitepuller_tools_get_ssh($remote['host'], $remote['user']);
+        $cmd = array(
+          "tar -czf " . $remote['tarball'] . " " . $remote['stash'],
+          );
+         _sitepuller_tools_ssh_cmds($ssh, $cmd, t('Failed to compress @stash into @tarball',
+          array('@stash' => $remote['stash'], '@tarball' => $remote['tarball'])));
+          $context['results'][] = t('Compressed stash into @tb', array('@tb' => $remote['tarball']));
+      break;
+
+      case "move stash to local":
+        $local = _sitepuller_tools_info_local($task['local_site_nid']);
+        $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+        _sitepuller_tools_move_tarball($remote, $local, &$context);
       break;
 
       default:
