@@ -267,6 +267,23 @@ function _sitepuller_tools_delete_remote_path($ssh, $remote_path) {
   _sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
 
+function _sitepuller_tools_delete_local_path($path) {
+  if (strlen($path) < 4) {
+    throw new Exception("Can't use this for short paths! $path", 1);
+  }
+  $output = array();
+  $return_var = 0;
+  if (PHP_OS === 'Windows') {
+      $out = exec("rd /s /q {$path}", $output, $return_var);
+  }
+  else {
+      $out = exec("rm -rf {$path}", $output, $return_var);
+  }
+  if ($return_var != 0) {
+    throw new Exception(t("Cannot delete @foo", array('@foo' => $path)), 1);
+  }
+}
+
 function _sitepuller_tools_pull_drupal_core($ssh, $remote_path, $site_root) {
   $target = "$remote_path/core";
   $cmd = array(
