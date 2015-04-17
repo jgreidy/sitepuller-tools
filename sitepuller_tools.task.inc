@@ -308,10 +308,11 @@ function _sitepuller_tools_delete_local_path($path) {
 
 function _sitepuller_tools_pull_drupal_core($ssh, $remote_path, $site_root) {
   $target = "$remote_path/core";
+  $mydir = basename($site_root);
   $cmd = array(
     "mkdir -p $target",
     "test -d $target",
-    "rsync -acz --exclude=sites --delete $site_root/ $target/",
+    "cd $site_root ; cd ../ ; rsync -acz --exclude=sites --delete $mydir/ $target/",
     );
   $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
 }
