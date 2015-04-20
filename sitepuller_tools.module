@@ -267,7 +267,12 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
       'file' => $inc_path,
       'finished' =>  'sitepuller_tools_perform_task_final',
        );
-    batch_set($batch);
+    //batch_set($batch);
+
+    if(!function_exists('sitepuller_tools_script_task')) {
+      module_load_include('task.inc', 'sitepuller_tools', $name = NULL);
+    }
+    sitepuller_tools_script_task($task_nid, $remote_subsite, $local_subsite, $form_state);
 
     // if(!function_exists('_sitepuller_tools_run_task')) {
     //   module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
