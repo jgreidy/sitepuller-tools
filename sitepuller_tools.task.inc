@@ -4,6 +4,106 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
+function sitepuller_tools_script_task($task_nid, $remote_subsite, $local_subsite, $form_state) {
+  $cmd = array();
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
+
+  // go to remote machine
+  $user = $remote['user'];
+  $host = $remote['host'];
+  $cmd[] = "ssh $user@$host";
+
+  // delete old stash
+  $tarball = $remote['tarball'];
+  $cmd[] = "rm --force $tarball";
+  if ($form_state['values']['fresh_copy']) {
+    $stash = $remote['stash'];
+    $cmd[] = "rm --force --recursive $stash";
+   }
+
+  // stash core
+  if ($task['pull_drupal']) {
+    $target = $remote['stash'] . '/core';
+    $mydir = basename($remote['root']);
+    $cmd[] = "mkdir -p $target";
+    $cmd[] = "test -d $target";
+    $cmd[] = "cd $site_root";
+    $cmd[] = "cd ../";
+    $cmd[] = "rsync -acz --exclude=sites --delete $mydir/ $target/";
+  }
+
+  // stash sites/all
+  if ($task['pull_code']) {
+    $target = $remote['stash'] . '/sites/all';
+    $site_root = $remote['root'];
+    $cmd[] = "mkdir -p $target";
+    $cmd[] = "test -d $target";
+    $cmd[] = "rsync -acz --exclude=sites --delete $site_root/sites/all/ $target/";
+  }
+
+  // stash sites/default
+  _sitepuller_tools_script_task_subsite($remote['stash'], $remote['root'], 'default', $task, $cmd);
+
+  // sash subsites
+  if ($remote_subsite != 'default') {
+    _sitepuller_tools_script_task_subsite($remote['stash'], $remote['root'], $remote_subsite, $task, $cmd);
+  }
+
+  // compress stash?
+  // return from remote machine to local machine
+  $cmd[] = "exit";
+
+  // delete local stash
+  // move remote stash to local
+  // decompress?
+  // install core
+  // install sites/all
+  // install sites/default
+  // install subsites
+
+  $target = $local['stash_dir'] . "/scripts";
+  _sitepuller_tools_write_script($target, $cmd);
+}
+
+function _sitepuller_tools_script_task_subsite($remote_path, $site_root, $subsite, $task, &$cmd) {
+  $target = "$remote_path/sites/$subsite";
+  $subsite_path = "$site_root/sites/$subsite";
+
+  if ($task['pull_files']) {
+    $public = "$subsite_path/" . $task['public_files_path'];
+    $target_path = "$target/files";
+    $cmd[] = "mkdir -p $target_path";
+    $cmd[] = "test -d $target_path";
+    $cmd[] = "rsync -acz --delete $public/ $target_path/";
+   }
+  if ($task['pull_private']) {
+    $private = "$subsite_path/" . $task['private_files_path'];
+    $target_path = "$target/private/files";
+    $cmd[] = "mkdir -p $target_path";
+    $cmd[] = "test -d $target_path";
+    $cmd[] = "rsync -acz --delete $private/ $target_path/";
+  }
+  if ($task['pull_database']) {
+    $target_path = "$target/database";
+    $cmd[] = "mkdir -p $target_path";
+    $cmd[] = "test -d $target_path";
+    $cmd[] = "cd $subsite_path";
+    $cmd[] = "drush sql-dump --ordered-dump > $target_path/database.sql";
+  }
+}
+
+function _sitepuller_tools_write_script($temp_dir, $cmds) {
+  $text = implode(" | exit 1\n", $cmds);
+  mkdir($temp_dir, 0775, true);
+  $file = "$temp_dir/sitepuller.sh";
+  file_put_contents($file, $text);
+  chmod($file, 0775);
+  dsm($file);
+}
+
+
 /**
  * batch processor for moving pulling Drupal site to local machine
  * @param  integer $task_nid       node id od sitepuller task
