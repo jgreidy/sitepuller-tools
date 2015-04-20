@@ -570,8 +570,21 @@ function _sitepuller_tools_remote_rsync_copy($ssh, $remote, $local) {
   $remote_user = $remote['user'];
   $remote_machine = $remote['host'];
   $cmd = array(
-    "rsync -acz -e ssh $remote_archive/ jgr25@Jamess-MacBook-Air.local:$local_archive/"
+    "rsync -acz -e 'ssh -l $remote_user' $remote_archive/ jgr25@Jamess-MacBook-Air.local:$local_archive/"
     );
   $out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
   dsm($out);
 }
+
+function _sitepuller_tools_remote_rsync_hail_mary($remote, $local) {
+  $remote_archive = $remote['stash'];
+  $local_archive = $local['stash'];
+  $remote_user = $remote['user'];
+  $remote_machine = $remote['host'];
+  $cmd = array(
+    "rsync -acz -e 'ssh -l $remote_user' $remote_user@$remote_machine:$remote_archive/ $local_archive/"
+    );
+  $out = _sitepuller_tools_local_cmds($cmd);
+  dsm($out);
+}
+
