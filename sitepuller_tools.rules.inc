@@ -325,59 +325,6 @@ function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
 	return $output;
 }
 
-//obsolete
-function _sitepuller_tools_backup_db($ssh, $site, $directory) {
-	$cmd[] = "cd $site ; drush sql-dump --ordered-dump > $directory/database.sql";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd);
-}
-
-function _sitepuller_tools_backup_code($ssh, $site, $directory) {
-	// use . to also grab .htaccess
-	$cmd[] = "shopt -s dotglob ; rsync -avcz --delete --exclude=sites/*/settings.php --exclude=sites/*/files --exclude=sites/*/private $site/ $directory/";
-	//$cmd[] = "rsync -avcz --delete $site/sites/all $directory/sites/";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd);
-}
-
-//obsolete
-function _sitepuller_tools_backup_subsite_public_files($ssh, $site_path, $subsite_path, $temp_directory) {
-	$cmd = "cd $subsite_path ; drush vget file_public_path";
-	$out7 = $ssh->exec($cmd);
-	$match = array();
-	preg_match("/file_public_path: \"([^\"]+)\"/", $out7, $match);
-	if (empty($match)) {
-		$cmd = "cd $subsite_path ; drush vget file_directory_path";
-		$out6 = $ssh->exec($cmd);
-		$match = array();
-		preg_match("/file_directory_path: \"([^\"]+)\"/", $out6, $match);
-		if (empty($match)) {
-			throw new Exception(t("Failed to determine public file path for @s in @p", array('@s' => $subsite_path, '@p' => $out6)));
-		}
-	}
-	$path = $site_path . '/' . $match[1];
-	$target = $temp_directory;
-	$cmd = array();
-	$cmd[] = "mkdir -p $target";
-	$cmd[] = "rsync -avcz --delete $path/ $target/";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy public files for subsite @p", array('@p' => $subsite_path)));
-}
-
-// obsolete
-function _sitepuller_tools_backup_subsite_private_files($ssh, $site_path, $subsite_path, $temp_directory) {
-	$cmd = "cd $subsite_path ; drush vget file_private_path";
-	$out7 = $ssh->exec($cmd);
-	$match = array();
-	preg_match("/file_private_path: \"([^\"]+)\"/", $out7, $match);
-	if (empty($match)) {
-		throw new Exception(t("Failed to determine private file path for @s", array('@s' => $subsite_path)));
-		}
-	$path = $site_path . '/' . $match[1];
-	$target = $temp_directory;
-	$cmd = array();
-	$cmd[] = "mkdir -p $target";
-	$cmd[] = "shopt -s dotglob ; rsync -avcz --delete $path/ $target/";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't copy private files for subsite @p", array('@p' => $subsite_path)));
-}
-
 /**
  * encrypt a string, return hex encoded version of encryption
  * @param  string $enropy     file contents of key file
