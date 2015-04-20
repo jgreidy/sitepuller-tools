@@ -204,8 +204,10 @@ function _sitepuller_tools_script_task_subsite($remote_path, $site_root, $subsit
 }
 
 function _sitepuller_tools_write_script($temp_dir, $cmds) {
-  $text = implode(" | exit 1\n", $cmds);
-  mkdir($temp_dir, 0775, true);
+  $text = implode(" || exit 1\n", $cmds);
+  if (!is_dir($temp_dir)) {
+    mkdir($temp_dir, 0775, true);
+  }
   $file = "$temp_dir/sitepuller.sh";
   file_put_contents($file, $text);
   chmod($file, 0775);
