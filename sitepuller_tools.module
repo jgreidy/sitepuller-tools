@@ -178,14 +178,12 @@ function sitepuller_tools_task_form($form_state) {
     '#collapsed' => FALSE,
   );
   $form['remote']['info'] = array(
-    '#markup' => t("Site '@site' on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
+    '#markup' => t("Host: @machine<br />Site: @site<br />Subsite: @subsite<br />", array(
+      '@site' => $remote['site_name'],
+      '@machine' => $remote['host'],
+      '@subsite' => $task['remote_subsite'],
+      )),
    );
-  $form['remote']['remote_subsites'] = array(
-    '#type' => 'radios',
-    '#title' => t('Remote subsite to pull:'),
-    '#default_value' => 'default',
-    '#options' => $remote['subsites'],
-    );
   $form['remote']['fresh_copy'] = array(
     '#type' => 'checkbox',
     '#title' => t('Delete any previous archive before starting'),
@@ -199,18 +197,42 @@ function sitepuller_tools_task_form($form_state) {
     '#collapsed' => FALSE,
   );
   $form['local']['info'] = array(
-    '#markup' => t("Site '@site' on this machine.", array('@site' => $local['name'])),
+    '#markup' => t("Host: localhost<br />Site: @site<br />Subsite: @subsite<br />", array(
+      '@site' => $local['site_name'],
+      '@subsite' => $task['local_subsite'],
+      )),
    );
-  $form['local']['local_subsites'] = array(
-    '#type' => 'radios',
-    '#title' => t('Local subsite to replace:'),
-    '#default_value' => 'default',
-    '#options' => $local['subsites'],
+
+  $form['task'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Task'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $options = array(
+    'pull_database' => t('Subsite database'),
+    'pull_drupal' => t('Drupal core code'),
+    'pull_code' => t('Theme, module, library code'),
+    'pull_files' => t('Public files'),
+    'pull_private' => t('Private files'),
     );
+  $defaults = array();
+  foreach ($options as $key => $value) {
+     if ($task["$key"]) $defaults[] = $key;
+  }
+  $form['task']['pull_options'] = array(
+    '#title' => t('Which components to pull'),
+    '#type' => 'checkboxes',
+    '#description' => t(''),
+    '#options' => $options,
+    '#default_value' => $defaults,
+    '#disabled' => TRUE,
+  );
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Pull',
+    '#value' => t('Create Sitepuller Script'),
   );
   $form['cancel'] = array(
     '#type' => 'button',
