@@ -801,6 +801,7 @@ function _sitepuller_tools_info_task($task_nid) {
 	$info = array();
 	$node = node_load($task_nid);
 	$task_wrapper = entity_metadata_wrapper('node', $node);
+	$info['local_db_connect'] =  $task_wrapper->field_sitepuller_local_db_connec->value();
 	$info['local_site_nid'] = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 	$info['local_subsite'] =  $task_wrapper->field_sitepuller_task_local_sub->value();
 	$info['private_files_path'] =  $task_wrapper->field_sitepuller_private_files->value();
@@ -810,6 +811,7 @@ function _sitepuller_tools_info_task($task_nid) {
 	$info['pull_drupal'] =  $task_wrapper->field_sitepuller_pull_drupal->value();
 	$info['pull_files'] =  $task_wrapper->field_sitepuller_pull_files->value();
 	$info['pull_private'] =  $task_wrapper->field_sitepuller_pull_private->value();
+	$info['remote_db_connect'] =  $task_wrapper->field_sitepuller_remote_db->value();
 	$info['remote_site_nid'] = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 	$info['remote_subsite'] =  $task_wrapper->field_sitepuller_task_remo_sub->value();
 	return $info;
