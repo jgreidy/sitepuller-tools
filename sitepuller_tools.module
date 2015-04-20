@@ -146,23 +146,10 @@ function sitepuller_tools_run_task($task_nid) {
       }
 
     // cache the current task nid, and local & remote nids for building the form
-    if(!function_exists('_sitepuller_tools_get_cached_data')) {
+    $info['current-task'] = array('task' => $task_nid);
+    if(!function_exists('_sitepuller_tools_set_cached_data')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
-    $info = _sitepuller_tools_get_cached_data();
-    $task = node_load($task_nid);
-    $task_wrapper = entity_metadata_wrapper('node', $task);
-    $remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
-    if (empty($info['remote']["$remote_site_nid"])) {
-      throw new Exception(
-        t('Missing cached information for remote site. Please <a href="/node/@nid/edit">resave the Sitepuller Remote</a>.', array('@nid' => $remote_site_nid)));
-    }
-    $local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
-    if (empty($info['local']["$local_site_nid"])) {
-      throw new Exception(t('Missing cached information for local site. Please <a href="/node/@nid/edit">resave the Sitepuller Local</a>.', array('@nid' => $local_site_nid)));
-    }
-    $info['current-task'] = array('task' => $task_nid, 'local' => $local_site_nid, 'remote' => $remote_site_nid);
-
     _sitepuller_tools_set_cached_data($info);
 
     return drupal_get_form('sitepuller_tools_task_form');
@@ -180,10 +167,9 @@ function sitepuller_tools_task_form($form_state) {
   }
   $info = _sitepuller_tools_get_cached_data();
   $task_nid = $info['current-task']['task'];
-  $local_site_nid = $info['current-task']['local'];
-  $remote_site_nid = $info['current-task']['remote'];
-  $remote = $info['remote']["$remote_site_nid"];
-  $local = $info['local']["$local_site_nid"];
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
 
   $form['remote'] = array(
     '#type' => 'fieldset',
@@ -192,13 +178,16 @@ function sitepuller_tools_task_form($form_state) {
     '#collapsed' => FALSE,
   );
   $form['remote']['info'] = array(
-    '#markup' => t("Site '@site' on @machine.", array('@site' => $remote['name'], '@machine' => $remote['machine'])),
+    '#markup' => t("Host: @machine<br />Site: @site<br />Subsite: @subsite<br />", array(
+      '@site' => $remote['site_name'],
+      '@machine' => $remote['host'],
+      '@subsite' => $task['remote_subsite'],
+      )),
    );
-  $form['remote']['remote_subsites'] = array(
-    '#type' => 'radios',
-    '#title' => t('Remote subsite to pull:'),
-    '#default_value' => 'default',
-    '#options' => $remote['subsites'],
+  $form['remote']['fresh_copy'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Delete any previous archive before starting'),
+    '#default_value' => FALSE,
     );
 
   $form['local'] = array(
@@ -208,18 +197,42 @@ function sitepuller_tools_task_form($form_state) {
     '#collapsed' => FALSE,
   );
   $form['local']['info'] = array(
-    '#markup' => t("Site '@site' on this machine.", array('@site' => $local['name'])),
+    '#markup' => t("Host: localhost<br />Site: @site<br />Subsite: @subsite<br />", array(
+      '@site' => $local['site_name'],
+      '@subsite' => $task['local_subsite'],
+      )),
    );
-  $form['local']['local_subsites'] = array(
-    '#type' => 'radios',
-    '#title' => t('Local subsite to replace:'),
-    '#default_value' => 'default',
-    '#options' => $local['subsites'],
+
+  $form['task'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Task'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $options = array(
+    'pull_database' => t('Subsite database'),
+    'pull_drupal' => t('Drupal core code'),
+    'pull_code' => t('Theme, module, library code'),
+    'pull_files' => t('Public files'),
+    'pull_private' => t('Private files'),
     );
+  $defaults = array();
+  foreach ($options as $key => $value) {
+     if ($task["$key"]) $defaults[] = $key;
+  }
+  $form['task']['pull_options'] = array(
+    '#title' => t('Which components to pull'),
+    '#type' => 'checkboxes',
+    '#description' => t(''),
+    '#options' => $options,
+    '#default_value' => $defaults,
+    '#disabled' => TRUE,
+  );
 
   $form['submit'] = array(
     '#type' => 'submit',
-    '#value' => 'Pull',
+    '#value' => t('Create Sitepuller Script'),
   );
   $form['cancel'] = array(
     '#type' => 'button',
@@ -236,24 +249,14 @@ function sitepuller_tools_task_form_validate($form, &$form_state) {
 }
 
 function sitepuller_tools_task_form_submit($form, &$form_state) {
-  if ($form_state['values']['op'] == 'Pull') {
+  if ($form_state['values']['op'] == 'Create Sitepuller Script') {
     $info = _sitepuller_tools_get_cached_data();
     $task_nid = $info['current-task']['task'];
-    $local_site_nid = $info['current-task']['local'];
-    $remote_site_nid = $info['current-task']['remote'];
-    $remote = $info['remote']["$remote_site_nid"];
-    $local = $info['local']["$local_site_nid"];
-    $index = $form_state['values']['remote_subsites'];
-    $remote_subsite = $remote['subsites']["$index"];
-    $index = $form_state['values']['local_subsites'];
-    $local_subsite = $local['subsites']["$index"];
 
-    if(!function_exists('_sitepuller_tools_run_task')) {
-      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    if(!function_exists('sitepuller_tools_script_task')) {
+      module_load_include('task.inc', 'sitepuller_tools', $name = NULL);
     }
-    _sitepuller_tools_run_task($task_nid, $remote_subsite, $local_subsite);
-
-    drupal_set_message(t('The Sitepuller Task has been run.'));
+    sitepuller_tools_script_task($task_nid, $form_state);
   }
   else {
   }
