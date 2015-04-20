@@ -419,24 +419,6 @@ function _sitepuller_tools_set_cached_data($my_data) {
 	$new_data = _sitepuller_tools_get_cached_data($my_data);
 }
 
-function _sitepuller_tools_store_cmds($machine, $cmds) {
-	global $sitepuller_cmds;
-	foreach($cmds as $cmd) {
-		$sitepuller_cmds["$machine"][] = $cmd;
-	}
-	return $stop = TRUE;
-}
-
-function _sitepuller_tools_write_cmds($temp_dir) {
-	global $sitepuller_cmds;
-	dsm ($sitepuller_cmds);
-	foreach ($sitepuller_cmds as $machine => $cmds) {
-		$text = implode("/n", $cmds);
-		$file = "$temp_dir/{$machine}_commands.sh";
-		file_put_contents($file, $text);
-	}
-}
-
 function _sitepuller_tools_info_task($task_nid) {
 	$info = array();
 	$node = node_load($task_nid);
