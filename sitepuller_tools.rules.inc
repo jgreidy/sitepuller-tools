@@ -773,12 +773,32 @@ function _sitepuller_tools_set_cached_data($my_data) {
 	$new_data = _sitepuller_tools_get_cached_data($my_data);
 }
 
+function _sitepuller_tools_store_cmds($machine, $cmds) {
+	global $sitepuller_cmds;
+	foreach($cmds as $cmd) {
+		$sitepuller_cmds["$machine"][] = $cmd;
+	}
+	return $stop = TRUE;
+}
+
+function _sitepuller_tools_write_cmds($temp_dir) {
+	global $sitepuller_cmds;
+	dsm ($sitepuller_cmds);
+	foreach ($sitepuller_cmds as $machine => $cmds) {
+		$text = implode("/n", $cmds);
+		$file = "$temp_dir/{$machine}_commands.sh";
+		file_put_contents($file, $text);
+	}
+}
+
 function _sitepuller_tools_info_task($task_nid) {
 	$info = array();
 	$node = node_load($task_nid);
 	$task_wrapper = entity_metadata_wrapper('node', $node);
 	$info['local_site_nid'] = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 	$info['local_subsite'] =  $task_wrapper->field_sitepuller_task_local_sub->value();
+	$info['private_files_path'] =  $task_wrapper->field_sitepuller_private_files->value();
+	$info['public_files_path'] =  $task_wrapper->field_sitepuller_public_files->value();
 	$info['pull_code'] =  $task_wrapper->field_sitepuller_pull_code->value();
 	$info['pull_database'] =  $task_wrapper->field_sitepuller_pull_database->value();
 	$info['pull_drupal'] =  $task_wrapper->field_sitepuller_pull_drupal->value();
@@ -822,3 +842,4 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
 	return $info;
 }
+
