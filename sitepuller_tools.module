@@ -256,19 +256,6 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
     $inc_path = drupal_get_path('module', 'sitepuller_tools') . '/sitepuller_tools.task.inc' ;
     $remote_archive = '/tmp/sitepuller/music.test2.library.cornell.edu/jgr25/archive/music.test2.library.cornell.edu.tar.gz';
 
-    $batch = array(
-      'operations' => array(
-        array('sitepuller_tools_perform_task', array($task_nid, $remote_subsite, $local_subsite, $form_state)),
-        ),
-      'title' => t('Processing Sitepuller Task'),
-      'init_message' => t('Task is starting.'),
-      'progress_message' => t('Processing.'),
-      'error_message' => t('Sitepuller Task has encountered an error.'),
-      'file' => $inc_path,
-      'finished' =>  'sitepuller_tools_perform_task_final',
-       );
-    //batch_set($batch);
-
     if(!function_exists('sitepuller_tools_script_task')) {
       module_load_include('task.inc', 'sitepuller_tools', $name = NULL);
     }
@@ -285,4 +272,3 @@ function sitepuller_tools_task_form_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'sitepuller-tasks';
 }
-
