@@ -142,14 +142,20 @@ function _sitepuller_tools_remote_site_check($node) {
 	$path = $wrapper->field_sitepuller_remote_root->value();
 	$name = $wrapper->field_sitepuller_remote_site->value();
 
-	$ssh = _sitepuller_tools_get_ssh($mach, $user);
-	$cmd[] = "test -d $path";
-	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Directory does not exist: @d", array("@d" => $path)));
-	$cmd[] = "cd $path ; drush core-status --pipe | grep bootstrap | grep Successful";
-	$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't connect to Drupal database for site '@name'", array('@name' => $name)));
-	$directory = "test";
-	_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
-	$subsites = _sitepuller_tools_remote_subsites($ssh, $path);
+	// disable ssh checks on remote site for aegir
+	if ($ssh_checks = FALSE) {
+		$ssh = _sitepuller_tools_get_ssh($mach, $user);
+		$cmd[] = "test -d $path";
+		$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Directory does not exist: @d", array("@d" => $path)));
+		$cmd[] = "cd $path ; drush core-status --pipe | grep bootstrap | grep Successful";
+		$output = _sitepuller_tools_ssh_cmds($ssh, $cmd, t("Can't connect to Drupal database for site '@name'", array('@name' => $name)));
+		$directory = "test";
+		_sitepuller_tools_prepare_remote_temp($ssh, $wrapper, $directory);
+		$subsites = _sitepuller_tools_remote_subsites($ssh, $path);
+	}
+	else {
+		$subsites = array('default');
+	}
 	_sitepuller_tools_cache_remote_site($node->nid, $name, $mach, $subsites);
 	return t("Validated remote site '@name'", array('@name' => $name));
 }
