@@ -138,7 +138,9 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   }
 
   $target = $local['stash_dir'] . "/scripts";
-  _sitepuller_tools_write_script($target, $cmd);
+  $script_path = _sitepuller_tools_write_script($target, $cmd);
+
+  drupal_set_message(t('The sitepuller script for this task is here:<p>@script</p>', array('@script' => $script_path)), 'status', FALSE);
 }
 
 function _sitepuller_tools_make_dir($path) {
@@ -211,7 +213,7 @@ function _sitepuller_tools_write_script($temp_dir, $cmds) {
   $file = "$temp_dir/sitepuller.sh";
   file_put_contents($file, $text);
   chmod($file, 0775);
-  dsm($file);
+  return $file;
 }
 
 function _sitepuller_tools_find_public_files_path($ssh, $site_path, $subsite_path) {
