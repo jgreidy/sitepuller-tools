@@ -146,23 +146,10 @@ function sitepuller_tools_run_task($task_nid) {
       }
 
     // cache the current task nid, and local & remote nids for building the form
-    if(!function_exists('_sitepuller_tools_get_cached_data')) {
+    $info['current-task'] = array('task' => $task_nid);
+    if(!function_exists('_sitepuller_tools_set_cached_data')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
-    $info = _sitepuller_tools_get_cached_data();
-    $task = node_load($task_nid);
-    $task_wrapper = entity_metadata_wrapper('node', $task);
-    $remote_site_nid = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
-    if (empty($info['remote']["$remote_site_nid"])) {
-      throw new Exception(
-        t('Missing cached information for remote site. Please <a href="/node/@nid/edit">resave the Sitepuller Remote</a>.', array('@nid' => $remote_site_nid)));
-    }
-    $local_site_nid = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
-    if (empty($info['local']["$local_site_nid"])) {
-      throw new Exception(t('Missing cached information for local site. Please <a href="/node/@nid/edit">resave the Sitepuller Local</a>.', array('@nid' => $local_site_nid)));
-    }
-    $info['current-task'] = array('task' => $task_nid, 'local' => $local_site_nid, 'remote' => $remote_site_nid);
-
     _sitepuller_tools_set_cached_data($info);
 
     return drupal_get_form('sitepuller_tools_task_form');
@@ -180,10 +167,9 @@ function sitepuller_tools_task_form($form_state) {
   }
   $info = _sitepuller_tools_get_cached_data();
   $task_nid = $info['current-task']['task'];
-  $local_site_nid = $info['current-task']['local'];
-  $remote_site_nid = $info['current-task']['remote'];
-  $remote = $info['remote']["$remote_site_nid"];
-  $local = $info['local']["$local_site_nid"];
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
 
   $form['remote'] = array(
     '#type' => 'fieldset',
