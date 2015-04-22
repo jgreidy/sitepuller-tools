@@ -22,8 +22,12 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm --force --recursive $stash");
   }
 
+  $rsync_stash_to_local = FALSE;
+  $copy_files_to_stash = empty($form_state['values']['copy_files']) ? FALSE : TRUE;
+
   // backup database on remote machine
   if ($task['pull_database']) {
+    $rsync_stash_to_local = TRUE;
     $cmd[] = "echo 'backing up database'";
     $db_connect = $task['remote_db_connect'];
     $mysqldump = _sitepuller_tools_mysqldump($db_connect);
