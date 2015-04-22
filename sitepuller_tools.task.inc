@@ -160,7 +160,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   }
 
   $target = $local['stash_dir'] . "/scripts";
-  $script_path = _sitepuller_tools_write_script($target, $cmd);
+  $script_path = _sitepuller_tools_write_script($task_nid, $target, $cmd);
 
   drupal_set_message(t('The sitepuller script for this task is here:<p>@script</p>', array('@script' => $script_path)), 'status', FALSE);
 }
@@ -227,8 +227,12 @@ function _sitepuller_tools_script_task_subsite($remote_path, $site_root, $subsit
   }
 }
 
-function _sitepuller_tools_write_script($temp_dir, $cmds) {
-  $text = implode(" || exit 1\n", $cmds);
+function _sitepuller_tools_write_script($task_nid, $temp_dir, $cmds) {
+  $header = sitepuller_tools_script_header($task_nid);
+  $text = implode("\n", $header);
+  foreach ($cmds as $value) {
+    $text .= "\n\n$value || error_exit " . escapeshellarg($value);
+  }
   if (!is_dir($temp_dir)) {
     mkdir($temp_dir, 0775, true);
   }
