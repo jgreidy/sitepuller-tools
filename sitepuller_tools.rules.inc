@@ -428,11 +428,11 @@ function _sitepuller_tools_info_task($task_nid) {
 	$info['local_subsite'] =  $task_wrapper->field_sitepuller_task_local_sub->value();
 	$info['private_files_path'] =  $task_wrapper->field_sitepuller_private_files->value();
 	$info['public_files_path'] =  $task_wrapper->field_sitepuller_public_files->value();
-	$info['pull_code'] =  $task_wrapper->field_sitepuller_pull_code->value();
-	$info['pull_database'] =  $task_wrapper->field_sitepuller_pull_database->value();
-	$info['pull_drupal'] =  $task_wrapper->field_sitepuller_pull_drupal->value();
-	$info['pull_files'] =  $task_wrapper->field_sitepuller_pull_files->value();
-	$info['pull_private'] =  $task_wrapper->field_sitepuller_pull_private->value();
+	$info['pull_code'] =  ($task_wrapper->field_sitepuller_pull_code->value() == 'yes') ? 1 : 0;
+	$info['pull_database'] =  ($task_wrapper->field_sitepuller_pull_database->value() == 'yes') ? 1 : 0;
+	$info['pull_drupal'] =  ($task_wrapper->field_sitepuller_pull_drupal->value() == 'yes') ? 1 : 0;
+	$info['pull_files'] =  ($task_wrapper->field_sitepuller_pull_files->value() == 'yes') ? 1 : 0;
+	$info['pull_private'] =  ($task_wrapper->field_sitepuller_pull_private->value() == 'yes') ? 1 : 0;
 	$info['remote_db_connect'] =  $task_wrapper->field_sitepuller_remote_db->value();
 	$info['remote_site_nid'] = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 	$info['remote_subsite'] =  $task_wrapper->field_sitepuller_task_remo_sub->value();
@@ -449,6 +449,7 @@ function _sitepuller_tools_info_remote($remote_site_nid) {
 	$info['tmp'] = $wrapper->field_sitepuller_remote_tmp->value();
 	$info['user'] = $wrapper->field_sitepuller_remote_user->value();
 	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
+	$info['user_sudo'] = ($wrapper->field_sitepuller_remote_sudo->value() == 'yes') ? 1 : 0;
 	$info['stash_name'] = 'stash';
 	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
 	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
@@ -464,9 +465,11 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info['site_name'] = $wrapper->field_sitepuller_local_site_name->value();
 	$info['site_root'] = $wrapper->field_sitepuller_local_site_root->value();
 	$info['tmp'] = $wrapper->field_sitepuller_local_tmp->value();
-	$info['use_make_file'] = $wrapper->field_sitepuller_use_make_file->value();
-	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
+	$info['use_make_file'] = ($wrapper->field_sitepuller_use_make_file->value() == 'yes') ? 1 : 0;
+
+	// keep these in this order!
 	$info['stash_name'] = 'stash';
+	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
 	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
 	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
 	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
