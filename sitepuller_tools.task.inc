@@ -35,76 +35,132 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
     $target = "$target_dir/$remote_subsite.sql";
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "$mysqldump > $target");
-
-    // pull database to local machine
-    $cmd[] = "echo 'pulling database to local machine'";
-    $local_target_dir = implode('/', array($local['stash_dir'], 'db'));
-    $cmd[] = _sitepuller_tools_make_dir($local_target_dir);
-    $local_target = "$local_target_dir/$remote_subsite.sql";
-    $user = $remote['user'];
-    $host = $remote['host'];
-    $cmd[] = "rsync -acz -e ssh $user@$host:$target $local_target";
-    $cmd[] = "echo 'Stored database here: $local_target'";
   }
 
-  // pull drupal core
-  if ($task['pull_drupal']) {
-    $cmd[] = "echo 'pulling drupal core'";
-    $source = $remote['root'];
-    $target = $local['site_root'];
-    $cmd[] = _sitepuller_tools_make_dir($target);
-    $user = $remote['user'];
-    $host = $remote['host'];
-    $cmd[] = "rsync -acz -e ssh --exclude=sites $user@$host:$source/ $target/";
-    $cmd[] = "echo 'Stored core here: $target'";
+  if ($copy_files_to_stash) {
+    $rsync_stash_to_local = TRUE;
+
+    // copy drupal core
+    if ($task['pull_drupal']) {
+      $cmd[] = "echo 'copying drupal core'";
+      $source = $remote['root'];
+      $target = implode('/', array($remote['stash_dir'], 'drupal'));
+      $user = $remote['user'];
+      $machine = $remote['host'];
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --exclude=sites $source/ $target/");
+    }
+
+    // copy sites/all
+    if ($task['pull_code']) {
+      $cmd[] = "echo 'copying modules, themes, libraries'";
+      $source = $remote['root'] . "/sites/all";
+      $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , 'all'));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --exclude=drush --delete $source/ $target/");
+    }
+
+    // copy subsite
+    $cmd[] = "echo 'copying subsite'";
+    $source = $remote['root'] . "/sites/$remote_subsite";
+    $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite));
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --exclude=files --exclude=private --exclude=settings.php --delete $source/ $target/");
+
+    // copy public files
+    if ($task['pull_files']) {
+      $cmd[] = "echo 'copying public files'";
+      $public_path = $task['public_files_path'];
+      $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
+      $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite, 'files'));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --delete $source/ $target/");
+    }
+
+    // copy private files
+    if ($task['pull_private']) {
+      $cmd[] = "echo 'copying private files'";
+      $public_path = $task['public_files_path'];
+      $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
+      $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite, 'private', 'files'));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --delete $source/ $target/");
+    }
   }
 
-  // pull sites/all
-  if ($task['pull_code']) {
-    $cmd[] = "echo 'pulling modules, themes, libraries'";
-    $source = $remote['root'] . "/sites/all";
-    $target = $local['site_root'] . "/sites/all";
-    $cmd[] = _sitepuller_tools_make_dir($target);
-    $user = $remote['user'];
-    $host = $remote['host'];
-    $cmd[] = "rsync -acz -e ssh --exclude=drush --delete $user@$host:$source/ $target/";
-    $cmd[] = "echo 'Stored modules, themes, libraries here: $target'";
-  }
-
-  // pull subsite
-  $cmd[] = "echo 'pulling subsite'";
-  $source = $remote['root'] . "/sites/$remote_subsite";
-  $target = $local['site_root'] . "/sites/$local_subsite";
-  $cmd[] = _sitepuller_tools_make_dir($target);
-  $user = $remote['user'];
-  $host = $remote['host'];
-  $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php $user@$host:$source/ $target/";
-  $cmd[] = "echo 'Stored subsite here: $target'";
-
-  // pull public files
-  if ($task['pull_files']) {
-    $cmd[] = "echo 'pulling public files'";
-    $public_path = $task['public_files_path'];
-    $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
-    $target = $local['site_root'] . "/sites/$local_subsite/files";
-    $cmd[] = _sitepuller_tools_make_dir($target);
-    $user = $remote['user'];
-    $host = $remote['host'];
-    $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
-    $cmd[] = "echo 'Stored public files here: $target'";
-  }
-
-  // pull private files
-  if ($task['pull_private']) {
-    $cmd[] = "echo 'pulling private files'";
-    $private_path = $task['private_files_path'];
-    $source = $remote['root'] . "/sites/$remote_subsite/$private_path";
-    $target = $local['site_root'] . "/sites/$local_subsite/private/files";
+  if ($rsync_stash_to_local) {
+    // pull stash to local machine
+    $cmd[] = "echo 'pulling stashed files to local machine'";
+    $source = $remote['stash_dir'];
+    $target = $local['stash_dir'];
     $cmd[] = _sitepuller_tools_make_dir($target);
     $user = $remote['user'];
     $host = $remote['host'];
     $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
-    $cmd[] = "echo 'Stored private files here: $target'";
+    $cmd[] = "echo 'Stored files here: $target'";
+  }
+
+  if (!$copy_files_to_stash) {
+
+    // pull drupal core
+    if ($task['pull_drupal']) {
+      $cmd[] = "echo 'pulling drupal core'";
+      $source = $remote['root'];
+      $target = $local['site_root'];
+      $cmd[] = _sitepuller_tools_make_dir($target);
+      $user = $remote['user'];
+      $host = $remote['host'];
+      $cmd[] = "rsync -acz -e ssh --exclude=sites $user@$host:$source/ $target/";
+      $cmd[] = "echo 'Stored core here: $target'";
+    }
+
+    // pull sites/all
+    if ($task['pull_code']) {
+      $cmd[] = "echo 'pulling modules, themes, libraries'";
+      $source = $remote['root'] . "/sites/all";
+      $target = $local['site_root'] . "/sites/all";
+      $cmd[] = _sitepuller_tools_make_dir($target);
+      $user = $remote['user'];
+      $host = $remote['host'];
+      $cmd[] = "rsync -acz -e ssh --exclude=drush --delete $user@$host:$source/ $target/";
+      $cmd[] = "echo 'Stored modules, themes, libraries here: $target'";
+    }
+
+    // pull subsite
+    $cmd[] = "echo 'pulling subsite'";
+    $source = $remote['root'] . "/sites/$remote_subsite";
+    $target = $local['site_root'] . "/sites/$local_subsite";
+    $cmd[] = _sitepuller_tools_make_dir($target);
+    $user = $remote['user'];
+    $host = $remote['host'];
+    $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php $user@$host:$source/ $target/";
+    $cmd[] = "echo 'Stored subsite here: $target'";
+
+    // pull public files
+    if ($task['pull_files']) {
+      $cmd[] = "echo 'pulling public files'";
+      $public_path = $task['public_files_path'];
+      $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
+      $target = $local['site_root'] . "/sites/$local_subsite/files";
+      $cmd[] = _sitepuller_tools_make_dir($target);
+      $user = $remote['user'];
+      $host = $remote['host'];
+      $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
+      $cmd[] = "echo 'Stored public files here: $target'";
+    }
+
+    // pull private files
+    if ($task['pull_private']) {
+      $cmd[] = "echo 'pulling private files'";
+      $private_path = $task['private_files_path'];
+      $source = $remote['root'] . "/sites/$remote_subsite/$private_path";
+      $target = $local['site_root'] . "/sites/$local_subsite/private/files";
+      $cmd[] = _sitepuller_tools_make_dir($target);
+      $user = $remote['user'];
+      $host = $remote['host'];
+      $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
+      $cmd[] = "echo 'Stored private files here: $target'";
+    }
   }
 
   // install database
