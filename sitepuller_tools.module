@@ -234,7 +234,8 @@ function sitepuller_tools_task_form($form_state) {
   $form['task']['pull_options'] = array(
     '#title' => t('Which components to pull'),
     '#type' => 'checkboxes',
-    '#description' => t(''),
+    '#description' => t('These selections can be changed by <a href="@link">editing the task</a>.',
+      array('@link' => '/node/' . $task_nid . '/edit')),
     '#options' => $options,
     '#default_value' => $defaults,
     '#disabled' => TRUE,
