@@ -4,7 +4,7 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
-function sitepuller_tools_script_task($task_nid, $form_state) {
+function sitepuller_tools_script_header($task_nid) {
   $cmd = array();
   $task = _sitepuller_tools_info_task($task_nid);
   $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
@@ -12,6 +12,14 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
 
   $remote_subsite = $task['remote_subsite'];
   $local_subsite = $task['local_subsite'];
+
+  $cmd[] = '#!/bin/bash';
+  $cmd[] = '# sitepuller.sh - move remote Drupal site to local machine';
+  $cmd[] = 'function error_exit {';
+  $cmd[] = ' echo "Command failed: " 1>&2';
+  $cmd[] = ' echo "$1" 1>&2';
+  $cmd[] = ' exit 1';
+  $cmd[] = '}';
 
   // startup message
   $machine = $remote['host'];
@@ -22,6 +30,20 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $cmd[] = "echo 'From $machine to your local machine'";
   $cmd[] = "echo 'Local site $local_site, subsite $local_subsite'";
   $cmd[] = "echo '*********** sitepuller ***********'";
+  return $cmd;
+}
+
+function sitepuller_tools_script_task($task_nid, $form_state) {
+  $cmd = array();
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
+
+  $remote_subsite = $task['remote_subsite'];
+  $local_subsite = $task['local_subsite'];
+  $machine = $remote['host'];
+  $site = $remote['site_name'];
+  $local_site = $local['site_name'];
 
   // delete old stash
   if ($form_state['values']['fresh_copy']) {
