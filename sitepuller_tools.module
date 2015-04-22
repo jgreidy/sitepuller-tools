@@ -190,6 +190,16 @@ function sitepuller_tools_task_form($form_state) {
     '#default_value' => FALSE,
     );
 
+  if ($task['pull_drupal'] || $task['pull_code'] || $task['pull_files'] || $task['pull_private']) {
+    $form['remote']['copy_files'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Make a remote copy'),
+      '#description' => t('Copy code and files on the remote machine then transfer the copy to the local machine (requires sudo). Use this if your remote user does not have access to the code or files.'),
+      '#default_value' => FALSE,
+      '#disabled' => !$remote['user_sudo'],
+      );
+  }
+
   $form['local'] = array(
     '#type' => 'fieldset',
     '#title' => t('Local Site'),
