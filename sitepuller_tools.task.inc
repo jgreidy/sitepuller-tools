@@ -4,35 +4,6 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
-function sitepuller_tools_script_header($task_nid) {
-  $cmd = array();
-  $task = _sitepuller_tools_info_task($task_nid);
-  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
-  $local = _sitepuller_tools_info_local($task['local_site_nid']);
-
-  $remote_subsite = $task['remote_subsite'];
-  $local_subsite = $task['local_subsite'];
-
-  $cmd[] = '#!/bin/bash';
-  $cmd[] = '# sitepuller.sh - move remote Drupal site to local machine';
-  $cmd[] = 'function error_exit {';
-  $cmd[] = ' echo "Command failed: " 1>&2';
-  $cmd[] = ' echo "$1" 1>&2';
-  $cmd[] = ' exit 1';
-  $cmd[] = '}';
-
-  // startup message
-  $machine = $remote['host'];
-  $site = $remote['site_name'];
-  $local_site = $local['site_name'];
-  $cmd[] = "echo '*********** sitepuller ***********'";
-  $cmd[] = "echo 'Moving site $site, subsite $remote_subsite'";
-  $cmd[] = "echo 'From $machine to your local machine'";
-  $cmd[] = "echo 'Local site $local_site, subsite $local_subsite'";
-  $cmd[] = "echo '*********** sitepuller ***********'";
-  return $cmd;
-}
-
 function sitepuller_tools_script_task($task_nid, $form_state) {
   $cmd = array();
   $task = _sitepuller_tools_info_task($task_nid);
@@ -227,11 +198,40 @@ function _sitepuller_tools_script_task_subsite($remote_path, $site_root, $subsit
   }
 }
 
+function sitepuller_tools_script_header($task_nid) {
+  $cmd = array();
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
+
+  $remote_subsite = $task['remote_subsite'];
+  $local_subsite = $task['local_subsite'];
+
+  $cmd[] = '#!/bin/bash';
+  $cmd[] = '# sitepuller.sh - move remote Drupal site to local machine';
+  $cmd[] = 'function error_exit {';
+  $cmd[] = ' echo "Scrip failed at step: $1" 1>&2';
+  $cmd[] = ' exit 1';
+  $cmd[] = '}';
+
+  // startup message
+  $machine = $remote['host'];
+  $site = $remote['site_name'];
+  $local_site = $local['site_name'];
+  $cmd[] = "echo '*********** sitepuller ***********'";
+  $cmd[] = "echo 'Moving site $site, subsite $remote_subsite'";
+  $cmd[] = "echo 'From $machine to your local machine'";
+  $cmd[] = "echo 'Local site $local_site, subsite $local_subsite'";
+  $cmd[] = "echo '*********** sitepuller ***********'";
+  return $cmd;
+}
+
 function _sitepuller_tools_write_script($task_nid, $temp_dir, $cmds) {
   $header = sitepuller_tools_script_header($task_nid);
   $text = implode("\n", $header);
+  $step = 100;
   foreach ($cmds as $value) {
-    $text .= "\n\n$value || error_exit " . escapeshellarg($value);
+    $text .= "\n\n$value || error_exit ss" . $step++;
   }
   if (!is_dir($temp_dir)) {
     mkdir($temp_dir, 0775, true);
