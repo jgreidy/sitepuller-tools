@@ -140,8 +140,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$output = _sitepuller_tools_local_cmds($cmd); //, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
 	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
-	$subsites = _sitepuller_tools_local_subsites($path);
-	_sitepuller_tools_cache_local_site($node->nid, $name, $subsites);
+	_sitepuller_tools_cache_local_site($node->nid, $name);
 	return t("Validated local site '@name'", array('@name' => $name));
 }
 
