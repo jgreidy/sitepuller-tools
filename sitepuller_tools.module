@@ -73,7 +73,7 @@ function sitepuller_tools_admin() {
     '#default_value' => variable_get('sitepuller_tools_entropy_file', ''),
     '#size' => 60,
     '#maxlength' => 255,
-    '#description' => t("A file that can be reliably be found on your disk somewhere (not available over the network or web accessible). The contents of this file will be used to encrypt and decrypt the RSA passphrase above. If the file gets deleted just make a different one, come back here and enter the passphrase again."),
+    '#description' => t("A file that can be reliably be found on your disk somewhere (not available over the network or web accessible). The contents of this file will be used to encrypt and decrypt the database credentials for your sites. If the file gets deleted just make a different one, and you'll need to re-enter your database credentials."),
     '#required' => TRUE,
   );
 
