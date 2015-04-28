@@ -239,43 +239,15 @@ function _sitepuller_tools_check_user() {
 	}
 }
 
-function _sitepuller_tools_local_subsites($local_site_root) {
-	$cmd[] = "cd $local_site_root";
-	$cmd[] = "ls sites/*/settings.php";
-	$out = _sitepuller_tools_local_cmds($cmd);
-	$subsites = array();
-	foreach ($out as $value) {
-		$parts = explode('/', $value);
-		if (!empty($parts[1])) {
-			$subsites[] = $parts[1];
-		}
-	}
-	return $subsites;
-}
-
-function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
-	$cmd[] = "cd $remote_site_root";
-	$cmd[] = "ls sites/*/settings.php";
-	$out = _sitepuller_tools_ssh_cmds($ssh, $cmd);
-	$subsites = array();
-	foreach ($out as $value) {
-		$parts = explode('/', $value);
-		if (!empty($parts[1])) {
-			$subsites[] = $parts[1];
-		}
-	}
-	return $subsites;
-}
-
 function _sitepuller_tools_cache_remote_site($nid, $name, $mach) {
 	$cache = _sitepuller_tools_get_cached_data();
 	$cache['remote']["$nid"] =  array('name' => $name, 'machine' => $mach);
 	_sitepuller_tools_set_cached_data($cache);
 }
 
-function _sitepuller_tools_cache_local_site($nid, $name, $subsites) {
+function _sitepuller_tools_cache_local_site($nid, $name) {
 	$cache = _sitepuller_tools_get_cached_data();
-	$cache['local']["$nid"] =  array('name' => $name, 'subsites' => $subsites);
+	$cache['local']["$nid"] =  array('name' => $name);
 	_sitepuller_tools_set_cached_data($cache);
 }
 
