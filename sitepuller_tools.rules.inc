@@ -230,8 +230,8 @@ function _sitepuller_tools_encrypt($entropy, $passphrase) {
  * @return nothing throws exception if there is no user configuration
  */
 function _sitepuller_tools_check_user() {
-	$encrypted_password = variable_get('sitepuller_tools_passphrase');
-	if (empty($encrypted_password)) {
+	$user = variable_get('sitepuller_tools_user', '');
+	if (empty($user)) {
 			throw new Exception(t("Please go to @path to configure your local user account for Sitepuller.",
 				array('@path' => 'admin/settings/sitepuller_tools',)
 				)
