@@ -101,7 +101,7 @@ function _sitepuller_tools_remote_site_check($node) {
 	$remote = _sitepuller_tools_info_remote($node->nid);
 
 	_sitepuller_tools_cache_remote_site($node->nid, $remote['site_name'], $remote['host']);
-	return t("Validated remote site '@name'", array('@name' => $name));
+	return t("Validated remote site '@name'", array('@name' => $remote['site_name']));
 }
 
 function sitepuller_tools_action_check_remote_site($node) {
