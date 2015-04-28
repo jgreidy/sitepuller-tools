@@ -209,27 +209,6 @@ function _sitepuller_tools_local_cmds($cmds, $error_message = FALSE) {
 	return $output;
 }
 
-function _sitepuller_tools_ssh_cmds($ssh, $cmds, $error_message = FALSE) {
-	foreach ($cmds as $step) {
-		$ssh->enableQuietMode();
-		$output[] = $ssh->exec($step);
-		$status = $ssh->getExitStatus();
-		$timeout = $ssh->isTimeout();
-		$err = $ssh->getStdError();
-		$ssh->disableQuietMode();
-		if ($status != 0) {
-			$msg = $error_message ? $error_message : t("Error on step: '@step' ; exit '@exit' ; error '@err' ",
-				array('@step' => $step, '@exit' => $status, '@err' => $err));
-			throw new Exception($msg);
-		}
-		if ($timeout) {
-			throw new Exception(t("Timeout on step: '@step' ; exit '@exit' ; error '@err' ",
-				array('@step' => $step, '@exit' => $status, '@err' => $err)));
-		}
-	}
-	return $output;
-}
-
 /**
  * encrypt a string, return hex encoded version of encryption
  * @param  string $enropy     file contents of key file
