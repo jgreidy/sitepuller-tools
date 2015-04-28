@@ -61,6 +61,44 @@ function sitepuller_tools_rules_action_info() {
 }
 
 /**
+ * encrypt a plain text string, returning a hex string
+ * @param  string $raw_string text you want to encrypt
+ * @return string             hex encoded encrypted string
+ */
+function _sitepuller_tools_encrypt_string($raw_string) {
+	$entropy = variable_get('sitepuller_tools_entropy_file', '');
+
+	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
+		throw new Exception(t("can't read contents of entropy file"));
+	}
+	$hash = sha1($entropy_file);
+	$cipher = new Crypt_Blowfish();
+	$cipher->setKey($hash);
+  $encrypted = $cipher->encrypt($raw_string);
+  $unpacked = bin2hex($encrypted);
+  return $unpacked;
+}
+
+/**
+ * decrypt a hex encoded encrypted string
+ * @param  string $hex_string hex string output by _sitepuller_tools_encrypt_string
+ * @return string             original $raw_string input
+ */
+function _sitepuller_tools_decrypt_string($hex_string) {
+	$entropy = variable_get('sitepuller_tools_entropy_file', '');
+
+	if (($entropy_file = file_get_contents($entropy)) === FALSE) {
+		throw new Exception(t("can't read contents of entropy file"));
+	}
+	$hash = sha1($entropy_file);
+	$cipher = new Crypt_Blowfish();
+	$cipher->setKey($hash);
+	$packed = pack("H*" , $hex_string);
+	$decrypted = $cipher->decrypt($packed);
+	return $decrypted;
+}
+
+/**
  * open an ssh connection to the machine
  * 	machine - string - name of remote machine
  *	remote_user - string - user to log in as on remote machines
