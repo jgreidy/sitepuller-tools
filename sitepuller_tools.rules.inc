@@ -179,10 +179,6 @@ function _sitepuller_tools_task_check($node) {
 	$local_site = node_load($local_site_nid);
 	$local_site_wrapper = entity_metadata_wrapper('node', $local_site);
 	array_push($sitepuller_tools_message, _sitepuller_tools_local_site_check($local_site));
-	$remote_site_wrapper = entity_metadata_wrapper('node', $remote_site);
-	$remote_machine =  $remote_site_wrapper->field_sitepuller_remote_host->value();
-	$remote_user = $remote_site_wrapper->field_sitepuller_remote_user->value();
-	$ssh = _sitepuller_tools_get_ssh($remote_machine, $remote_user);
 	return $sitepuller_tools_message;
 }
 
