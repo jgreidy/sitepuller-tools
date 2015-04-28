@@ -67,16 +67,6 @@ function sitepuller_tools_admin() {
     '#required' => TRUE,
   );
 
-  $form['sitepuller_tools_private_key_file'] = array(
-    '#type' => 'textfield',
-    '#title' => t('RSA Private Key File'),
-    '#default_value' => variable_get('sitepuller_tools_private_key_file', ''),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Absolute path to your ssh key file for RSA. eg. /Users/myuser/.ssh/id_rsa"),
-    '#required' => TRUE,
-  );
-
   $form['sitepuller_tools_passphrase'] = array(
     '#type' => 'password',
     '#title' => t('RSA passphrase'),
@@ -118,10 +108,6 @@ function sitepuller_tools_admin() {
  */
 function sitepuller_tools_admin_validate($form, &$form_state) {
   $user = $form_state['values']['sitepuller_tools_user'];
-  $private = $form_state['values']['sitepuller_tools_private_key_file'];
-  if (!(file_exists($private) && ($private_rsa = file_get_contents($private)) !== FALSE)) {
-    form_set_error('sitepuller_tools_private_key_file', t('Can not open @file', array('@file' => $private)));
-  }
   $entropy_file = $form_state['values']['sitepuller_tools_entropy_file'];
   if (!(file_exists($entropy_file) && ($entropy = file_get_contents($entropy_file)) !== FALSE)) {
     form_set_error('sitepuller_tools_entropy_file', t('Can not open @file', array('@file' => $entropy)));
