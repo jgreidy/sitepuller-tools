@@ -157,17 +157,6 @@ function sitepuller_tools_action_check_local_site($node) {
 		);
 }
 
-function _sitepuller_tools_prepare_remote_temp($ssh, $remote_site_wrapper, $directory = FALSE) {
-	$tmp = $remote_site_wrapper->field_sitepuller_remote_tmp->value();
-	$user = $remote_site_wrapper->field_sitepuller_remote_user->value();
-	$site = $remote_site_wrapper->field_sitepuller_remote_site->value();
-	$path = $directory ? "$tmp/sitepuller/$site/$user/$directory" : "$tmp/sitepuller/$site/$user";
-	$cmd[] = "mkdir -p $path";
-	$cmd[] = "test -d $path";
-	_sitepuller_tools_ssh_cmds($ssh, $cmd, t('Failed to create remote directory: @d', array('@d' => $path)));
-	return $path;
-}
-
 function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory = FALSE) {
 	$tmp = $local_site_wrapper->field_sitepuller_local_tmp->value();
 	$user = variable_get('sitepuller_tools_user', 'no_user');
