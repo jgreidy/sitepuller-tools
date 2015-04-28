@@ -139,7 +139,7 @@ function _sitepuller_tools_local_site_check($node) {
 	$cmd[] = "drush status | grep Drupal";
 	$output = _sitepuller_tools_local_cmds($cmd); //, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
 	$directory = "test";
-	_sitepuller_tools_prepare_local_temp($wrapper, $directory);
+	_sitepuller_tools_prepare_local_temp($tmp, $name, $directory);
 	_sitepuller_tools_cache_local_site($node->nid, $name);
 	return t("Validated local site '@name'", array('@name' => $name));
 }
@@ -157,10 +157,8 @@ function sitepuller_tools_action_check_local_site($node) {
 		);
 }
 
-function _sitepuller_tools_prepare_local_temp($local_site_wrapper, $directory = FALSE) {
-	$tmp = $local_site_wrapper->field_sitepuller_local_tmp->value();
+function _sitepuller_tools_prepare_local_temp($tmp, $site, $directory = FALSE) {
 	$user = variable_get('sitepuller_tools_user', 'no_user');
-	$site = $local_site_wrapper->field_sitepuller_local_site_name->value();
 	$path = $directory ? "$tmp/sitepuller/$site/$user/$directory" : "$tmp/sitepuller/$site/$user";
 	$cmd[] = "mkdir -p $path";
 	$cmd[] = "test -d $path";
