@@ -65,8 +65,8 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $source = $remote['root'] . "/sites/$remote_subsite";
     $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite));
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "sudo cd $target", TRUE);
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "sudo rsync -e ssh -acz --super --exclude=files --exclude=private --exclude=settings.php --delete . $target/", TRUE);
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "cd $target");
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --super --exclude=files --exclude=private --exclude=settings.php --delete . $target/");
 
     // copy public files
     if ($task['pull_files']) {
@@ -75,7 +75,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
       $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
       $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite, 'files'));
       $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
-      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "sudo rsync -e ssh -acz --delete $source/ $target/");
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --delete $source/ $target/");
     }
 
     // copy private files
@@ -85,7 +85,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
       $source = $remote['root'] . "/sites/$remote_subsite/$public_path";
       $target = implode('/', array($remote['stash_dir'], 'drupal', 'sites' , $local_subsite, 'private', 'files'));
       $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target));
-      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "sudo rsync -e ssh -acz --delete $source/ $target/", TRUE);
+      $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rsync -e ssh -acz --delete $source/ $target/");
     }
   }
 
@@ -201,11 +201,10 @@ function _sitepuller_tools_make_dir($path) {
   return "test -d $path || mkdir -p $path";
 }
 
-function _sitepuller_tools_format_remote_cmd($remote, $cmd, $use_t = FALSE) {
+function _sitepuller_tools_format_remote_cmd($remote, $cmd) {
   $user = $remote['user'];
   $host = $remote['host'];
-  $flags = $use_t ? '-t' : '';
-  $remote_cmd = "ssh $flags $user@$host '" . addslashes($cmd) . "'";
+  $remote_cmd = "ssh $user@$host '" . addslashes($cmd) . "'";
   return $remote_cmd;
 }
 
