@@ -302,7 +302,6 @@ function _sitepuller_tools_info_remote($remote_site_nid) {
 	$info['site_name'] = $wrapper->field_sitepuller_remote_site->value();
 	$info['tmp'] = $wrapper->field_sitepuller_remote_tmp->value();
 	$info['user'] = $wrapper->field_sitepuller_remote_user->value();
-	$info['user_sudo'] = ($wrapper->field_sitepuller_remote_sudo->value() == 'yes') ? 1 : 0;
 
 	// keep these in this order!
 	$info['stash_name'] = 'stash';
