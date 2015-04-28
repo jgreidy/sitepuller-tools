@@ -118,13 +118,13 @@ function sitepuller_tools_action_check_remote_site($node) {
 }
 
 function _sitepuller_tools_local_site_check($node) {
-	$wrapper = entity_metadata_wrapper('node', $node);
+	$local = _sitepuller_tools_info_local($node->nid);
 
-	$name = $wrapper->field_sitepuller_local_site_name->value();
-	$tmp = $wrapper->field_sitepuller_local_tmp->value();
-	$path = $wrapper->field_sitepuller_local_site_root->value();
-	$use_make = $wrapper->field_sitepuller_use_make_file->value();
-	$make_file = $wrapper->field_sitepuller_drush_make_file ->value();
+	$name = $local['site_name'];
+	$tmp = $local['tmp'];
+	$path = $local['site_root'];
+	$use_make = $local['use_make_file'];
+	$make_file = $local['drush_make_file'];
 	$preamble = variable_get('sitepuller_tools_preamble', '');
 
 	if ($use_make != 0) {
