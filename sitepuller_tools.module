@@ -112,16 +112,6 @@ function sitepuller_tools_admin_validate($form, &$form_state) {
   if (!(file_exists($entropy_file) && ($entropy = file_get_contents($entropy_file)) !== FALSE)) {
     form_set_error('sitepuller_tools_entropy_file', t('Can not open @file', array('@file' => $entropy)));
   }
-
-  // encrypt the passphrase using the digested entropy file as a key
-  $passphrase = $form_state['values']['sitepuller_tools_passphrase'];
-  if(!function_exists('_sitepuller_tools_encrypt')) {
-    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    }
-  $unpacked = _sitepuller_tools_encrypt($entropy, $passphrase);
-
-  $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
-  // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
 }
 
 function sitepuller_tools_run_task($task_nid) {
