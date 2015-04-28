@@ -401,9 +401,9 @@ function _sitepuller_tools_remote_subsites($ssh, $remote_site_root) {
 	return $subsites;
 }
 
-function _sitepuller_tools_cache_remote_site($nid, $name, $mach, $subsites) {
+function _sitepuller_tools_cache_remote_site($nid, $name, $mach) {
 	$cache = _sitepuller_tools_get_cached_data();
-	$cache['remote']["$nid"] =  array('name' => $name, 'machine' => $mach, 'subsites' => $subsites);
+	$cache['remote']["$nid"] =  array('name' => $name, 'machine' => $mach);
 	_sitepuller_tools_set_cached_data($cache);
 }
 
