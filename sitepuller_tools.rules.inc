@@ -194,29 +194,6 @@ function sitepuller_tools_action_save_task($node) {
 	}
 }
 
-/**
- * tries to get connect string from local site - NEVER WORKED FOR DEVDESKTOP!
- * @param  [type] $local_site_root [description]
- * @return [type]                  [description]
- */
-function _sitepuller_tools_get_db_connect_string($local_site_root) {
-	try {
-		$preamble = variable_get('sitepuller_tools_preamble', '');
-		$cmd = array (
-			"$preamble",
-			"cd $local_site_root",
-			//"which drush",
-			"drush sql-connect",
-			//"drush status --show-passwords",
-		);
-		$out = _sitepuller_tools_local_cmds($cmd);
-	}
-	catch (Exception $e) {
-		drupal_set_message(t("Can not get sql connect string for @site",
-			array ('@site' => $local_site_root)), 'warning', FALSE);
-	}
-}
-
 function _sitepuller_tools_local_cmds($cmds, $error_message = FALSE) {
 	$output = array();
 	$status = 0;
