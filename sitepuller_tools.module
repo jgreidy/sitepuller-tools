@@ -4,6 +4,92 @@
  * Code for the Sitepuller-Tools module.
  */
 
+define('SITEPULLER_USE_STORED_CONNECT', '(use the stored connect string)');
+
+/**
+ * Implements hook_form_FOMR_ID_alter
+ * @param  array &$form      describes form
+ * @param  array $form_state describes form state
+ * @return array             modify $form
+ */
+function sitepuller_tools_form_node_form_alter(&$form, $form_state) {
+   $type = isset($form['#node']->type) ? $form['#node']->type : '';
+   if ($type == 'sitepuller_task') {
+    $add_validation = FALSE;
+    if (isset($form['#node']->nid)) {
+      $nid = $form['#node']->nid;
+      if(!function_exists('_sitepuller_tools_info_task')) {
+        module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+      }
+      $task = _sitepuller_tools_info_task($nid);
+      if (!empty($task['local_db_connect'])) {
+        $form['field_sitepuller_local_db_connec']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+        $add_validation = TRUE;
+      }
+      if (!empty($task['remote_db_connect'])) {
+        $form['field_sitepuller_remote_db']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+        $add_validation = TRUE;
+      }
+    }
+    else {
+      // if this is creating a new node add validation to encrypt initial db_connect strings
+      $add_validation = TRUE;
+    }
+    if ($add_validation) {
+      //array_unshift($form['#validate'], 'sitepuller_tools_task_node_validate');
+      // add my validation function after all other validation has run
+      $form['#validate'][] = 'sitepuller_tools_task_node_validate';
+    }
+   }
+
+}
+
+function sitepuller_tools_task_node_validate($form, &$form_state) {
+  $type = isset($form['#node']->type) ? $form['#node']->type : '';
+  if ($type == 'sitepuller_task') {
+    $form_local_connect = $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'];
+    $form_remote_connect = $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'];
+    if(!function_exists('_sitepuller_tools_encrypt_string')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    if (empty($form['#node']->nid)) {
+      // new node is about to be created - encrypt connect strings
+      $local_connect = _sitepuller_tools_encrypt_string($form_local_connect);
+      $remote_connect = _sitepuller_tools_encrypt_string($form_remote_connect);
+    }
+    else {
+      $nid = $form['#node']->nid;
+      $task = _sitepuller_tools_info_task($nid);
+
+      // validate & encrypt local connect string
+      if ($form_local_connect == SITEPULLER_USE_STORED_CONNECT) {
+        $local_connect = $task['local_db_connect'];
+        if (empty($local_connect)) {
+          form_set_error('field_sitepuller_local_db_connec', t('Expecting a stored local connect string.'));
+        }
+      }
+      else {
+        // encrypt the connect string
+         $local_connect = _sitepuller_tools_encrypt_string($form_local_connect);
+      }
+
+      // validate & encrypt remote connect string
+      if ($form_remote_connect == SITEPULLER_USE_STORED_CONNECT) {
+        $remote_connect = $task['remote_db_connect'];
+        if (empty($remote_connect)) {
+          form_set_error('field_sitepuller_remote_db', t('Expecting a stored remote connect string.'));
+        }
+      }
+      else {
+        // encrypt the connect string
+        $remote_connect = _sitepuller_tools_encrypt_string($form_remote_connect);
+      }
+    }
+  $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'] = $local_connect;
+  $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'] = $remote_connect;
+  }
+}
+
 /**
  * Implements hook_permission
  * @return array permission info
@@ -67,33 +153,13 @@ function sitepuller_tools_admin() {
     '#required' => TRUE,
   );
 
-  $form['sitepuller_tools_private_key_file'] = array(
-    '#type' => 'textfield',
-    '#title' => t('RSA Private Key File'),
-    '#default_value' => variable_get('sitepuller_tools_private_key_file', ''),
-    '#size' => 60,
-    '#maxlength' => 255,
-    '#description' => t("Absolute path to your ssh key file for RSA. eg. /Users/myuser/.ssh/id_rsa"),
-    '#required' => TRUE,
-  );
-
-  $form['sitepuller_tools_passphrase'] = array(
-    '#type' => 'password',
-    '#title' => t('RSA passphrase'),
-    '#default_value' => variable_get('sitepuller_tools_passphrase', 'the old one'),
-    '#size' => 60,
-    '#maxlength' => 128,
-    '#description' => t("Enter the passphrase you used to create your RSA public/private key pair."),
-    '#required' => TRUE,
-  );
-
   $form['sitepuller_tools_entropy_file'] = array(
     '#type' => 'textfield',
     '#title' => t('Encryption Entropy File'),
     '#default_value' => variable_get('sitepuller_tools_entropy_file', ''),
     '#size' => 60,
     '#maxlength' => 255,
-    '#description' => t("A file that can be reliably be found on your disk somewhere (not available over the network or web accessible). The contents of this file will be used to encrypt and decrypt the RSA passphrase above. If the file gets deleted just make a different one, come back here and enter the passphrase again."),
+    '#description' => t("A file that can be reliably be found on your disk somewhere (not available over the network or web accessible). The contents of this file will be used to encrypt and decrypt the database credentials for your sites. If the file gets deleted just make a different one, and you'll need to re-enter your database credentials."),
     '#required' => TRUE,
   );
 
@@ -118,24 +184,10 @@ function sitepuller_tools_admin() {
  */
 function sitepuller_tools_admin_validate($form, &$form_state) {
   $user = $form_state['values']['sitepuller_tools_user'];
-  $private = $form_state['values']['sitepuller_tools_private_key_file'];
-  if (!(file_exists($private) && ($private_rsa = file_get_contents($private)) !== FALSE)) {
-    form_set_error('sitepuller_tools_private_key_file', t('Can not open @file', array('@file' => $private)));
-  }
   $entropy_file = $form_state['values']['sitepuller_tools_entropy_file'];
   if (!(file_exists($entropy_file) && ($entropy = file_get_contents($entropy_file)) !== FALSE)) {
     form_set_error('sitepuller_tools_entropy_file', t('Can not open @file', array('@file' => $entropy)));
   }
-
-  // encrypt the passphrase using the digested entropy file as a key
-  $passphrase = $form_state['values']['sitepuller_tools_passphrase'];
-  if(!function_exists('_sitepuller_tools_encrypt')) {
-    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    }
-  $unpacked = _sitepuller_tools_encrypt($entropy, $passphrase);
-
-  $form_state['values']['sitepuller_tools_passphrase'] = $unpacked;
-  // sm(array('before' => $passphrase, 'after' => $encrypted, 'unpacked' => $unpacked, 'hash' => $hash));
 }
 
 function sitepuller_tools_run_task($task_nid) {
@@ -189,16 +241,6 @@ function sitepuller_tools_task_form($form_state) {
     '#title' => t('Delete any previous archive before starting'),
     '#default_value' => FALSE,
     );
-
-  if ($task['pull_drupal'] || $task['pull_code'] || $task['pull_files'] || $task['pull_private']) {
-    $form['remote']['copy_files'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Make a remote copy'),
-      '#description' => t('Copy code and files on the remote machine then transfer the copy to the local machine (requires sudo). Use this if your remote user does not have access to the code or files.'),
-      '#default_value' => FALSE,
-      '#disabled' => !$remote['user_sudo'],
-      );
-  }
 
   $form['local'] = array(
     '#type' => 'fieldset',

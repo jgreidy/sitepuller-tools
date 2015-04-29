@@ -29,7 +29,10 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   if ($task['pull_database']) {
     $rsync_stash_to_local = TRUE;
     $cmd[] = "echo 'backing up database'";
-    $db_connect = $task['remote_db_connect'];
+    if(!function_exists('_sitepuller_tools_decrypt_string')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $db_connect = _sitepuller_tools_decrypt_string($task['remote_db_connect']);
     $mysqldump = _sitepuller_tools_mysqldump($db_connect);
     $target_dir = implode('/', array($remote['stash_dir'], 'db'));
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
@@ -170,7 +173,10 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $subsite_root = $local['site_root'] . "/sites/$local_subsite";
     $local_target_dir = implode('/', array($local['stash_dir'], 'db'));
     $db_backup = "$local_target_dir/$remote_subsite.sql";
-    $db_connect = $task['local_db_connect'];
+        if(!function_exists('_sitepuller_tools_decrypt_string')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $db_connect = _sitepuller_tools_decrypt_string($task['local_db_connect']);
     $cmd[] = "cd $subsite_root";
     $cmd[] = "drush sql-drop --yes";
     $cmd[] = "$db_connect < $db_backup";
