@@ -4,6 +4,44 @@
  * Code for the Sitepuller-Tools module.
  */
 
+define('SITEPULLER_USE_STORED_CONNECT', '(use the stored connect string)');
+
+/**
+ * Implements hook_form_FOMR_ID_alter
+ * @param  array &$form      describes form
+ * @param  array $form_state describes form state
+ * @return array             modify $form
+ */
+function sitepuller_tools_form_node_form_alter(&$form, $form_state) {
+   $type = isset($form['#node']->type) ? $form['#node']->type : '';
+   if ($type == 'sitepuller_task') {
+    $nid = $form['#node']->nid;
+    if(!function_exists('_sitepuller_tools_info_task')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $add_validation = FALSE;
+    $task = _sitepuller_tools_info_task($nid);
+    if (!empty($task['local_db_connect'])) {
+      $form['field_sitepuller_local_db_connec']['und']['0']['#required'] = FALSE;
+      $form['field_sitepuller_local_db_connec']['und']['0']['value']['#required'] = FALSE;
+      $form['field_sitepuller_local_db_connec']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+      $add_validation = TRUE;
+    }
+    if (!empty($task['remote_db_connect'])) {
+      $form['field_sitepuller_remote_db']['und']['0']['#required'] = FALSE;
+      $form['field_sitepuller_remote_db']['und']['0']['value']['#required'] = FALSE;
+      $form['field_sitepuller_remote_db']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+      $add_validation = TRUE;
+    }
+    if ($add_validation) {
+      //array_unshift($form['#validate'], 'sitepuller_tools_task_node_validate');
+      // add my validation function after all other validation has run
+      $form['#validate'][] = 'sitepuller_tools_task_node_validate';
+    }
+   }
+
+}
+
 /**
  * Implements hook_permission
  * @return array permission info
