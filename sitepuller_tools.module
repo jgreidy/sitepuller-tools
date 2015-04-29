@@ -15,22 +15,24 @@ define('SITEPULLER_USE_STORED_CONNECT', '(use the stored connect string)');
 function sitepuller_tools_form_node_form_alter(&$form, $form_state) {
    $type = isset($form['#node']->type) ? $form['#node']->type : '';
    if ($type == 'sitepuller_task') {
-    $nid = $form['#node']->nid;
-    if(!function_exists('_sitepuller_tools_info_task')) {
-      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    }
     $add_validation = FALSE;
-    $task = _sitepuller_tools_info_task($nid);
-    if (!empty($task['local_db_connect'])) {
-      $form['field_sitepuller_local_db_connec']['und']['0']['#required'] = FALSE;
-      $form['field_sitepuller_local_db_connec']['und']['0']['value']['#required'] = FALSE;
-      $form['field_sitepuller_local_db_connec']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
-      $add_validation = TRUE;
+    if (isset($form['#node']->nid)) {
+      $nid = $form['#node']->nid;
+      if(!function_exists('_sitepuller_tools_info_task')) {
+        module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+      }
+      $task = _sitepuller_tools_info_task($nid);
+      if (!empty($task['local_db_connect'])) {
+        $form['field_sitepuller_local_db_connec']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+        $add_validation = TRUE;
+      }
+      if (!empty($task['remote_db_connect'])) {
+        $form['field_sitepuller_remote_db']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+        $add_validation = TRUE;
+      }
     }
-    if (!empty($task['remote_db_connect'])) {
-      $form['field_sitepuller_remote_db']['und']['0']['#required'] = FALSE;
-      $form['field_sitepuller_remote_db']['und']['0']['value']['#required'] = FALSE;
-      $form['field_sitepuller_remote_db']['und']['0']['value']['#default_value'] = t(SITEPULLER_USE_STORED_CONNECT);
+    else {
+      // if this is creating a new node add validation to encrypt initial db_connect strings
       $add_validation = TRUE;
     }
     if ($add_validation) {
@@ -45,39 +47,46 @@ function sitepuller_tools_form_node_form_alter(&$form, $form_state) {
 function sitepuller_tools_task_node_validate($form, &$form_state) {
   $type = isset($form['#node']->type) ? $form['#node']->type : '';
   if ($type == 'sitepuller_task') {
-    $nid = $form['#node']->nid;
-    if(!function_exists('_sitepuller_tools_info_task')) {
+    $form_local_connect = $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'];
+    $form_remote_connect = $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'];
+    if(!function_exists('_sitepuller_tools_encrypt_string')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
-    $task = _sitepuller_tools_info_task($nid);
-
-    // validate & encrypt local connect string
-    $form_local_connect = $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'];
-    if ($form_local_connect == SITEPULLER_USE_STORED_CONNECT) {
-      $local_connect = $task['local_db_connect'];
-      if (empty($local_connect)) {
-        form_set_error('field_sitepuller_local_db_connec', t('Expecting a stored local connect string.'));
-      }
+    if (empty($form['#node']->nid)) {
+      // new node is about to be created - encrypt connect strings
+      $local_connect = _sitepuller_tools_encrypt_string($form_local_connect);
+      $remote_connect = _sitepuller_tools_encrypt_string($form_remote_connect);
     }
     else {
-      // encrypt the connect string
-       $local_connect = _sitepuller_tools_encrypt_string($form_local_connect);
-    }
-    $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'] = $local_connect;
+      $nid = $form['#node']->nid;
+      $task = _sitepuller_tools_info_task($nid);
 
-    // validate & encrypt remote connect string
-    $form_remote_connect = $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'];
-    if ($form_remote_connect == SITEPULLER_USE_STORED_CONNECT) {
-      $remote_connect = $task['remote_db_connect'];
-      if (empty($remote_connect)) {
-        form_set_error('field_sitepuller_remote_db', t('Expecting a stored remote connect string.'));
+      // validate & encrypt local connect string
+      if ($form_local_connect == SITEPULLER_USE_STORED_CONNECT) {
+        $local_connect = $task['local_db_connect'];
+        if (empty($local_connect)) {
+          form_set_error('field_sitepuller_local_db_connec', t('Expecting a stored local connect string.'));
+        }
+      }
+      else {
+        // encrypt the connect string
+         $local_connect = _sitepuller_tools_encrypt_string($form_local_connect);
+      }
+
+      // validate & encrypt remote connect string
+      if ($form_remote_connect == SITEPULLER_USE_STORED_CONNECT) {
+        $remote_connect = $task['remote_db_connect'];
+        if (empty($remote_connect)) {
+          form_set_error('field_sitepuller_remote_db', t('Expecting a stored remote connect string.'));
+        }
+      }
+      else {
+        // encrypt the connect string
+        $remote_connect = _sitepuller_tools_encrypt_string($form_remote_connect);
       }
     }
-    else {
-      // encrypt the connect string
-       $remote_connect = _sitepuller_tools_encrypt_string($form_remote_connect);
-    }
-    $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'] = $remote_connect;
+  $form_state['values']['field_sitepuller_local_db_connec']['und']['0']['value'] = $local_connect;
+  $form_state['values']['field_sitepuller_remote_db']['und']['0']['value'] = $remote_connect;
   }
 }
 
