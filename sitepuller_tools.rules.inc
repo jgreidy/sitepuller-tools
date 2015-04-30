@@ -131,7 +131,8 @@ function _sitepuller_tools_local_site_check($node) {
 		$output = _sitepuller_tools_local_cmds($cmd, t('drush make failed: @dir', array('@dir' => $make_file)));
 	}
 
-	$cmd[0] = "test -d $path";
+	unset($cmd);
+	$cmd[] = "test -d $path";
 	$output = _sitepuller_tools_local_cmds($cmd, t('directory does not exist: @dir', array('@dir' => $path)));
 	unset($cmd);
 	$cmd[] = "cd $path";
