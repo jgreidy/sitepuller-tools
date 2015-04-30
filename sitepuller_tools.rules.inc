@@ -125,7 +125,6 @@ function _sitepuller_tools_local_site_check($node) {
 	$path = $local['site_root'];
 	$use_make = $local['use_make_file'];
 	$make_file = $local['drush_make_file'];
-	$preamble = variable_get('sitepuller_tools_preamble', '');
 
 	if ($use_make != 0) {
 		$cmd[] = "test -d $path || drush make --prepare-install --working-copy $make_file $path";
@@ -134,7 +133,7 @@ function _sitepuller_tools_local_site_check($node) {
 
 	$cmd[0] = "test -d $path";
 	$output = _sitepuller_tools_local_cmds($cmd, t('directory does not exist: @dir', array('@dir' => $path)));
-	$cmd[0] = $preamble;
+	unset($cmd);
 	$cmd[] = "cd $path";
 	$cmd[] = "drush status | grep Drupal";
 	$output = _sitepuller_tools_local_cmds($cmd); //, t('Can not connect to the database for site \'@name\'', array('@name' => $name)));
