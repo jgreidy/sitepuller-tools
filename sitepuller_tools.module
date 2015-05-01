@@ -47,8 +47,8 @@ function sitepuller_tools_form_node_form_alter(&$form, $form_state) {
 function sitepuller_tools_task_node_validate($form, &$form_state) {
   $type = isset($form['#node']->type) ? $form['#node']->type : '';
   if ($type == 'sitepuller_task') {
-    $form_local_connect = $form_state['values']['field_sitepuller_loc_db_con']['und']['0']['value'];
-    $form_remote_connect = $form_state['values']['field_sitepuller_remo_db_con']['und']['0']['value'];
+    $form_local_connect = trim($form_state['values']['field_sitepuller_loc_db_con']['und']['0']['value']);
+    $form_remote_connect = trim($form_state['values']['field_sitepuller_remo_db_con']['und']['0']['value']);
     if(!function_exists('_sitepuller_tools_encrypt_string')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
