@@ -141,8 +141,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $cmd[] = "drush cc all";
   }
 
-  $target = $local['stash_dir'] . "/scripts";
-  $script_path = _sitepuller_tools_write_script($task_nid, $target, $cmd);
+  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'], $cmd);
 
   drupal_set_message(t('The sitepuller script for this task is here:<p>@script</p>', array('@script' => $script_path)), 'status', FALSE);
 }
@@ -237,7 +236,7 @@ function sitepuller_tools_script_header($task_nid) {
   return $cmd;
 }
 
-function _sitepuller_tools_write_script($task_nid, $temp_dir, $cmds) {
+function _sitepuller_tools_write_script($task_nid, $script_dir, $script_name, $cmds) {
   $header = sitepuller_tools_script_header($task_nid);
   $text = implode("\n", $header);
   $step = 100;
@@ -245,9 +244,9 @@ function _sitepuller_tools_write_script($task_nid, $temp_dir, $cmds) {
     $text .= "\n\n$value || error_exit ss" . $step++;
   }
   if (!is_dir($temp_dir)) {
-    mkdir($temp_dir, 0775, true);
+    mkdir($script_dir, 0775, true);
   }
-  $file = "$temp_dir/sitepuller.sh";
+  $file = "$script_dir/$script_name";
   file_put_contents($file, $text);
   chmod($file, 0775);
   return $file;
