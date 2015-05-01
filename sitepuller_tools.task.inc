@@ -243,7 +243,7 @@ function _sitepuller_tools_write_script($task_nid, $script_dir, $script_name, $c
   foreach ($cmds as $value) {
     $text .= "\n\n$value || error_exit ss" . $step++;
   }
-  if (!is_dir($temp_dir)) {
+  if (!is_dir($script_dir)) {
     mkdir($script_dir, 0775, true);
   }
   $file = "$script_dir/$script_name";
