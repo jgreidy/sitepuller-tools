@@ -223,6 +223,10 @@ function sitepuller_tools_script_header($task_nid) {
   $cmd[] = ' echo "Scrip failed at step: $1" 1>&2';
   $cmd[] = ' exit 1';
   $cmd[] = '}';
+  $cmd[] = 'if [ -z "$SSH_AUTH_SOCK" ] ; then';
+  $cmd[] = ' eval `ssh-agent -s`';
+  $cmd[] = ' ssh-add';
+  $cmd[] = 'fi';
 
   // startup message
   $machine = $remote['host'];
