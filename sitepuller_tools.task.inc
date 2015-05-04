@@ -82,7 +82,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $cmd[] = _sitepuller_tools_make_dir($target);
   $user = $remote['user'];
   $host = $remote['host'];
-  $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php $user@$host:$source/ $target/";
+  $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php --exclude=drushrc.php $user@$host:$source/ $target/";
   $cmd[] = "echo 'Stored subsite here: $target'";
 
   // pull public files
