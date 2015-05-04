@@ -328,6 +328,9 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
 	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
 	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
+	$info['script_dir'] = $info['stash_dir'] . '/scripts';
+	$info['script_name'] = 'sitepuller.sh';
+	$info['script'] = $info['script_dir'] . '/' . $info['script_name'];
 	return $info;
 }
 
