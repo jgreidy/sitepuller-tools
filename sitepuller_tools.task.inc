@@ -82,7 +82,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $cmd[] = _sitepuller_tools_make_dir($target);
   $user = $remote['user'];
   $host = $remote['host'];
-  $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php $user@$host:$source/ $target/";
+  $cmd[] = "rsync -acz -e ssh --exclude=files --exclude=private --exclude=settings.php --exclude=drushrc.php $user@$host:$source/ $target/";
   $cmd[] = "echo 'Stored subsite here: $target'";
 
   // pull public files
@@ -141,8 +141,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $cmd[] = "drush cc all";
   }
 
-  $target = $local['stash_dir'] . "/scripts";
-  $script_path = _sitepuller_tools_write_script($task_nid, $target, $cmd);
+  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'], $cmd);
 
   drupal_set_message(t('The sitepuller script for this task is here:<p>@script</p>', array('@script' => $script_path)), 'status', FALSE);
 }
@@ -224,6 +223,10 @@ function sitepuller_tools_script_header($task_nid) {
   $cmd[] = ' echo "Scrip failed at step: $1" 1>&2';
   $cmd[] = ' exit 1';
   $cmd[] = '}';
+  $cmd[] = 'if [ -z "$SSH_AUTH_SOCK" ] ; then';
+  $cmd[] = ' eval `ssh-agent -s`';
+  $cmd[] = ' ssh-add';
+  $cmd[] = 'fi';
 
   // startup message
   $machine = $remote['host'];
@@ -237,17 +240,17 @@ function sitepuller_tools_script_header($task_nid) {
   return $cmd;
 }
 
-function _sitepuller_tools_write_script($task_nid, $temp_dir, $cmds) {
+function _sitepuller_tools_write_script($task_nid, $script_dir, $script_name, $cmds) {
   $header = sitepuller_tools_script_header($task_nid);
   $text = implode("\n", $header);
   $step = 100;
   foreach ($cmds as $value) {
     $text .= "\n\n$value || error_exit ss" . $step++;
   }
-  if (!is_dir($temp_dir)) {
-    mkdir($temp_dir, 0775, true);
+  if (!is_dir($script_dir)) {
+    mkdir($script_dir, 0775, true);
   }
-  $file = "$temp_dir/sitepuller.sh";
+  $file = "$script_dir/$script_name";
   file_put_contents($file, $text);
   chmod($file, 0775);
   return $file;

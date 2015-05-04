@@ -124,11 +124,20 @@ function sitepuller_tools_menu() {
    );
 
   $items['sitepuller_tools/%/run'] = array(
-    'title' => 'Sitepuller Task Runner',
-    'description' => 'Execute a Sitepuller task.',
+    'title' => 'Sitepuller Task Script Builder',
+    'description' => 'Build a Sitepuller task script.',
     'access arguments' => array('execute sitepuller_tools tasks'),
     'type' => MENU_CALLBACK,
     'page callback' => 'sitepuller_tools_run_task',
+    'page arguments' => array(1),
+  );
+
+  $items['sitepuller_tools/%/exec'] = array(
+    'title' => 'Sitepuller Task Script Output:',
+    'description' => 'Execute a Sitepuller task script.',
+    'access arguments' => array('execute sitepuller_tools tasks'),
+    'type' => MENU_CALLBACK,
+    'page callback' => 'sitepuller_tools_execute_script',
     'page arguments' => array(1),
   );
 
@@ -201,6 +210,38 @@ function sitepuller_tools_run_task($task_nid) {
     drupal_set_message(implode("\r ",$sitepuller_tools_message));
     return array();
   }
+}
+
+function sitepuller_tools_execute_script($task_nid) {
+  try {
+    $node = node_load($task_nid);
+    if (empty($node) || $node->type != 'sitepuller_task') {
+      throw new Exception(t("sitepuller_tools_execute_script expects sitepuller tasks"));
+      }
+    if(!function_exists('_sitepuller_tools_info_task')) {
+      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    }
+    $task = _sitepuller_tools_info_task($task_nid);
+    $local = _sitepuller_tools_info_local($task['local_site_nid']);
+    $script = $local['script'];
+    if (!file_exists($script)) {
+      throw new Exception(t('Script file does not exist: @sf'), array('@sf' => $script));
+    }
+    $last_line = exec($script, $output, $status);
+    if ($status != 0) {
+      throw new Exception("Error Processing Script", 1);
+    }
+    $text = format_string('<p>%text</p>', array('%text' => $script));
+    foreach ($output as $line) {
+      $text .= format_string('@text<br />', array('@text' => $line));
+    }
+  }
+  catch (Exception $e) {
+    $sitepuller_tools_message[] = $e->getMessage();
+    drupal_set_message(implode("\r ",$sitepuller_tools_message));
+    $text = $e->getMessage();
+  }
+  return array('#markup' => $text);
 }
 
 function sitepuller_tools_task_form($form_state) {
