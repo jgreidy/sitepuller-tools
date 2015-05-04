@@ -227,18 +227,21 @@ function sitepuller_tools_execute_script($task_nid) {
     if (!file_exists($script)) {
       throw new Exception(t('Script file does not exist: @sf'), array('@sf' => $script));
     }
-    $cmds = file_get_contents($script);
-    $output = array();
-    $last_line = exec($cmds, $output, $status);
-    drupal_set_message(implode("<br \>\r ",$output));
+    $last_line = exec($script, $output, $status);
     if ($status != 0) {
       throw new Exception("Error Processing Script", 1);
+    }
+    $text = format_string('<p>%text</p>', array('%text' => $script));
+    foreach ($output as $line) {
+      $text .= format_string('@text<br />', array('@text' => $line));
     }
   }
   catch (Exception $e) {
     $sitepuller_tools_message[] = $e->getMessage();
     drupal_set_message(implode("\r ",$sitepuller_tools_message));
+    $text = $e->getMessage();
   }
+  return array('#markup' => $text);
 }
 
 function sitepuller_tools_task_form($form_state) {
