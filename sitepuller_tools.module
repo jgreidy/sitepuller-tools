@@ -133,7 +133,7 @@ function sitepuller_tools_menu() {
   );
 
   $items['sitepuller_tools/%/exec'] = array(
-    'title' => 'Execute Sitepuller Task Script',
+    'title' => 'Sitepuller Task Script Output:',
     'description' => 'Execute a Sitepuller task script.',
     'access arguments' => array('execute sitepuller_tools tasks'),
     'type' => MENU_CALLBACK,
