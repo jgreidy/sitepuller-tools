@@ -124,6 +124,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $cmd[] = "cd $subsite_root";
     $cmd[] = "drush sql-drop --yes";
     $cmd[] = "$db_connect < $db_backup";
+    $cmd[] = "drush updatedb --cache-clear=1";
 
     // set up file paths
     $subsite_root = $local['site_root'] . "/sites/$local_subsite";
