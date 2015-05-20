@@ -128,7 +128,6 @@ function _sitepuller_tools_local_site_check($node) {
 
 	if ($use_make != 0) {
 		$cmd[] = "test -d $path || drush make --prepare-install --working-copy --force-complete $make_file $path";
-		dsm($cmd);
 		$output = _sitepuller_tools_local_cmds($cmd, t('drush make failed: @dir', array('@dir' => $make_file)));
 	}
 
