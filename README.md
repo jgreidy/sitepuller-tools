@@ -16,6 +16,7 @@ Configure sitepuller:
   - you only need to do this once
 
 Create a node describing your local site:
+    - enter a drush make file path in the sitepuller local site node
 - go to node/add (Create Content) and create a Sitepuller Local node
   - the first time you save the node, it will create a site from your drush make file
   - got to the new site and run through the Drupal initialization to connect it to it's database
