@@ -16,15 +16,17 @@ Configure sitepuller:
   - you only need to do this once
 
 Create a node describing your local site:
+- create the local site
+  - you can use drush make on the command line
+  - you can use DevDesktop to create a simple latest version of Drupal site
+  - you can use the Sitepuller Local Site node
+    - enter a drush make file path in the sitepuller local site node
+    - check off "Create an empty site using a drush make file"
+    - the first time you save the node, it will create a site from your drush make file
+- got to the new site in your browser and run through the Drupal initialization to connect it to it's database
+  - you need to create the database yourself with MAMP
+  - DevDesktop creates the database for you
 - go to node/add (Create Content) and create a Sitepuller Local node
-  - the first time you save the node, it will create a site from your drush make file
-  - got to the new site and run through the Drupal initialization to connect it to it's database
-    - you need to create the database yourself with MAMP
-    - DevDesktop creates the database for you
-  - go to the site root directory and type this at the command line:
-    drush sql-connect
-  - copy the resulting mysql... stuff
-  - reopen the Sitepuller Local node and paste it into the 'Database Connect String'
 - whenever you save this node sitepuller confirms that it can work with this site
 
 Create a node describing your remote site:
