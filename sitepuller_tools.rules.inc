@@ -286,7 +286,6 @@ function _sitepuller_tools_info_task($task_nid) {
 	$info['pull_drupal'] =  ($task_wrapper->field_sitepuller_pull_drupal->value() == 'yes') ? 1 : 0;
 	$info['pull_files'] =  ($task_wrapper->field_sitepuller_pull_files->value() == 'yes') ? 1 : 0;
 	$info['pull_private'] =  ($task_wrapper->field_sitepuller_pull_private->value() == 'yes') ? 1 : 0;
-	$info['remote_db_connect'] =  $task_wrapper->field_sitepuller_remo_db_con->value();
 	$info['remote_site_nid'] = $task_wrapper->field_sitepuller_task_remo_site->getIdentifier();
 	$info['remote_subsite'] =  $task_wrapper->field_sitepuller_task_remo_sub->value();
 	return $info;
@@ -301,6 +300,7 @@ function _sitepuller_tools_info_remote($remote_site_nid) {
 	$info['site_name'] = $wrapper->field_sitepuller_remote_site->value();
 	$info['tmp'] = $wrapper->field_sitepuller_remote_tmp->value();
 	$info['user'] = $wrapper->field_sitepuller_remote_user->value();
+	$info['remote_db_connect'] =  $wrapper->field_sitepuller_remo_db_con->value();
 
 	// keep these in this order!
 	$info['stash_name'] = 'stash';
