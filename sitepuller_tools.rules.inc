@@ -305,7 +305,7 @@ function _sitepuller_tools_info_remote($remote_site_nid) {
 
 	// keep these in this order!
 	$info['stash_name'] = 'stash';
-	$info['stash_dir'] = $info['tmp'] . '/sitepuller/' . $info['site_name'];
+	$info['stash_dir'] = $info['tmp'] . '/' . $info['user'] . '/sitepuller/' . $info['site_name'];
 	$info['stash'] =  $info['stash_dir'] . '/' . $info['stash_name'];
 	$info['tarball_name'] = $info['stash_name'] . ".tar.gz";
 	$info['tarball'] = $info['stash_dir'] . '/' . $info['tarball_name'];
