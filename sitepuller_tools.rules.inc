@@ -277,7 +277,6 @@ function _sitepuller_tools_info_task($task_nid) {
 	$info = array();
 	$node = node_load($task_nid);
 	$task_wrapper = entity_metadata_wrapper('node', $node);
-	$info['local_db_connect'] =  $task_wrapper->field_sitepuller_loc_db_con->value();
 	$info['local_site_nid'] = $task_wrapper->field_sitepuller_task_local_site->getIdentifier();
 	$info['local_subsite'] =  $task_wrapper->field_sitepuller_task_local_sub->value();
 	$info['private_files_path'] =  $task_wrapper->field_sitepuller_private_files->value();
@@ -321,6 +320,7 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info['site_root'] = $wrapper->field_sitepuller_local_site_root->value();
 	$info['tmp'] = $wrapper->field_sitepuller_local_tmp->value();
 	$info['use_make_file'] = ($wrapper->field_sitepuller_use_make_file->value() == 'yes') ? 1 : 0;
+	$info['local_db_connect'] = $wrapper->field_sitepuller_loc_db_con->value();
 
 	// keep these in this order!
 	$info['stash_name'] = 'stash';
