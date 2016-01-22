@@ -31,7 +31,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     if(!function_exists('_sitepuller_tools_decrypt_string')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
-    $db_connect = _sitepuller_tools_decrypt_string($task['remote_db_connect']);
+    $db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
     $mysqldump = _sitepuller_tools_mysqldump($db_connect);
     $target_dir = implode('/', array($remote['stash_dir'], 'db'));
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
@@ -120,7 +120,7 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
         if(!function_exists('_sitepuller_tools_decrypt_string')) {
       module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
     }
-    $db_connect = _sitepuller_tools_decrypt_string($task['local_db_connect']);
+    $db_connect = _sitepuller_tools_decrypt_string($local['local_db_connect']);
     $cmd[] = "cd $subsite_root";
     $cmd[] = "drush sql-drop --yes";
     $cmd[] = "$db_connect < $db_backup";
