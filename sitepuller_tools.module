@@ -352,6 +352,19 @@ function sitepuller_tools_task_form_validate($form, &$form_state) {
   if ($form_state['values']['op'] == 'Cancel') {
     drupal_goto('sitepuller-tasks');
   }
+
+  // be sure connect strings exist for local and remote sites
+  $info = _sitepuller_tools_get_cached_data();
+  $task_nid = $info['current-task']['task'];
+  $task = _sitepuller_tools_info_task($task_nid);
+  $remote = _sitepuller_tools_info_remote($task['remote_site_nid']);
+  if (empty($remote['remote_db_connect'])) {
+    form_set_error('remote', t('The remote site needs a database connect string.'));
+  }
+  $local = _sitepuller_tools_info_local($task['local_site_nid']);
+  if (empty($local['local_db_connect'])) {
+    form_set_error('local', t('The local site needs a database connect string.'));
+  }
 }
 
 function sitepuller_tools_task_form_submit($form, &$form_state) {
