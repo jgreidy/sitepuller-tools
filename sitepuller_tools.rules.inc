@@ -123,13 +123,6 @@ function _sitepuller_tools_local_site_check($node) {
 	$name = $local['site_name'];
 	$tmp = $local['tmp'];
 	$path = $local['site_root'];
-	$use_make = $local['use_make_file'];
-	$make_file = $local['drush_make_file'];
-
-	if ($use_make != 0) {
-		$cmd[] = "test -d $path || drush make --prepare-install --working-copy --force-complete $make_file $path";
-		$output = _sitepuller_tools_local_cmds($cmd, t('drush make failed: @dir', array('@dir' => $make_file)));
-	}
 
 	unset($cmd);
 	$cmd[] = "test -d $path";
@@ -315,11 +308,9 @@ function _sitepuller_tools_info_local($local_site_nid) {
 	$info = array();
 	$node = node_load($local_site_nid);
 	$wrapper = entity_metadata_wrapper('node', $node);
-	$info['drush_make_file'] = $wrapper->field_sitepuller_drush_make_file->value();
 	$info['site_name'] = $wrapper->field_sitepuller_local_site_name->value();
 	$info['site_root'] = $wrapper->field_sitepuller_local_site_root->value();
 	$info['tmp'] = $wrapper->field_sitepuller_local_tmp->value();
-	$info['use_make_file'] = ($wrapper->field_sitepuller_use_make_file->value() == 'yes') ? 1 : 0;
 	$info['local_db_connect'] = $wrapper->field_sitepuller_loc_db_con->value();
 
 	// keep these in this order!
