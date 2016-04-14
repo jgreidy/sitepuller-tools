@@ -4,13 +4,24 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
-function _sitepuller_tools_script_init($task_nid, $local, $remote) {
+function _sitepuller_tools_script_init($local, $remote) {
   if(!function_exists('_sitepuller_tools_decrypt_string')) {
     module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
   }
-  $cmd[] = "REMODBC=" . _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
-  $cmd[] = "LOCADBC=" . _sitepuller_tools_decrypt_string($local['local_db_connect']);
-  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'] . '.ini', $cmd);
+  $cmd[] = '#!/bin/bash';
+  $cmd[] = "REMOTEDBC='" . _sitepuller_tools_decrypt_string($remote['remote_db_connect']) . "'";
+  $cmd[] = "LOCALDBC='" . _sitepuller_tools_decrypt_string($local['local_db_connect']) . "'";
+
+  $text = implode(PHP_EOL, $cmd) . PHP_EOL;
+  $script_dir = $local['script_dir'];
+  $script_name = $local['script_name'];
+  if (!is_dir($script_dir)) {
+    mkdir($script_dir, 0775, true);
+  }
+  $file = "$script_dir/$script_name.ini";
+  file_put_contents($file, $text);
+  chmod($file, 0700);
+  return $file;
 }
 
 function sitepuller_tools_script_task($task_nid, $form_state) {
