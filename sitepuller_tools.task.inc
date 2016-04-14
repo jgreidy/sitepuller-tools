@@ -10,7 +10,7 @@ function _sitepuller_tools_script_init($task_nid, $local, $remote) {
   }
   $cmd[] = "REMODBC=" . _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
   $cmd[] = "LOCADBC=" . _sitepuller_tools_decrypt_string($local['local_db_connect']);
-  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'], $cmd);
+  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'] . '.ini', $cmd);
 }
 
 function sitepuller_tools_script_task($task_nid, $form_state) {
