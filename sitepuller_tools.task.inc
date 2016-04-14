@@ -8,8 +8,9 @@ function _sitepuller_tools_script_init($local, $remote) {
   if(!function_exists('_sitepuller_tools_decrypt_string')) {
     module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
   }
+  $remote_db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
   $cmd[] = '#!/bin/bash';
-  $cmd[] = "REMOTEDBC='" . _sitepuller_tools_decrypt_string($remote['remote_db_connect']) . "'";
+  $cmd[] = "REMOTEDUMP='" . _sitepuller_tools_mysqldump($remote_db_connect) . "'";
   $cmd[] = "LOCALDBC='" . _sitepuller_tools_decrypt_string($local['local_db_connect']) . "'";
 
   $text = implode(PHP_EOL, $cmd) . PHP_EOL;
@@ -40,9 +41,9 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $ini = _sitepuller_tools_script_init($local, $remote);
   $cmd[] = "source $ini";
   $cmd[] = "rm $ini";
-  $cmd[] = 'echo $REMOTEDBC';
+  $cmd[] = 'echo $REMOTEDUMP';
   $cmd[] = 'echo $LOCALDBC';
-  $cmd[] = "exit 0";
+  // $cmd[] = "exit 0";
 
   // delete old stash
   if ($form_state['values']['fresh_copy']) {
