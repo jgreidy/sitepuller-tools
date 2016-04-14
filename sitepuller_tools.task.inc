@@ -4,6 +4,15 @@
  * Code for the Sitepuller-Tools module Task batch completion.
  */
 
+function _sitepuller_tools_script_init($task_nid, $local, $remote) {
+  if(!function_exists('_sitepuller_tools_decrypt_string')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  $cmd[] = "REMODBC=" . _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
+  $cmd[] = "LOCADBC=" . _sitepuller_tools_decrypt_string($local['local_db_connect']);
+  $script_path = _sitepuller_tools_write_script($task_nid, $local['script_dir'], $local['script_name'], $cmd);
+}
+
 function sitepuller_tools_script_task($task_nid, $form_state) {
   $cmd = array();
   $task = _sitepuller_tools_info_task($task_nid);
@@ -15,6 +24,9 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $machine = $remote['host'];
   $site = $remote['site_name'];
   $local_site = $local['site_name'];
+
+  // write ini file
+  _sitepuller_tools_script_init($task_nid, $local, $remote);
 
   // delete old stash
   if ($form_state['values']['fresh_copy']) {
