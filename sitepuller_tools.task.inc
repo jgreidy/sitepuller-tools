@@ -37,7 +37,12 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   $local_site = $local['site_name'];
 
   // write ini file
-  _sitepuller_tools_script_init($task_nid, $local, $remote);
+  $ini = _sitepuller_tools_script_init($local, $remote);
+  $cmd[] = "source $ini";
+  $cmd[] = "rm $ini";
+  $cmd[] = 'echo $REMOTEDBC';
+  $cmd[] = 'echo $LOCALDBC';
+  $cmd[] = "exit 0";
 
   // delete old stash
   if ($form_state['values']['fresh_copy']) {
