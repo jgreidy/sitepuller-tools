@@ -57,15 +57,15 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   if ($task['pull_database']) {
     $rsync_stash_to_local = TRUE;
     $cmd[] = "echo 'backing up database'";
-    if(!function_exists('_sitepuller_tools_decrypt_string')) {
-      module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    }
-    $db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
-    $mysqldump = _sitepuller_tools_mysqldump($db_connect);
+    // if(!function_exists('_sitepuller_tools_decrypt_string')) {
+    //   module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    // }
+    // $db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
+    // $mysqldump = _sitepuller_tools_mysqldump($db_connect);
     $target_dir = implode('/', array($remote['stash_dir'], 'db'));
     $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
     $target = "$target_dir/$remote_subsite.sql";
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "$mysqldump > $target");
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "`echo ${REMOTEDUMP}` > $target");
   }
 
   if ($rsync_stash_to_local) {
