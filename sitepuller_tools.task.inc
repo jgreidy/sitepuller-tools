@@ -313,7 +313,7 @@ function _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subs
 
   // delete the local db copy
   $cmd[] =  "echo 'deleting local db dump'";
-  $cmd[] = "rm -rf $local_db_sql";
+  $cmd[] = "rm -f $local_db_sql";
 
   // set up file paths
   $subsite_root = $local['site_root'] . "/sites/$local_subsite";
