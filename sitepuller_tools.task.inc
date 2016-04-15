@@ -46,10 +46,10 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   // $cmd[] = "exit 0";
 
   // delete old stash
-  if ($form_state['values']['fresh_copy']) {
-    $stash = $remote['stash'];
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm --force --recursive $stash");
-  }
+  // if ($form_state['values']['fresh_copy']) {
+  //   $stash = $remote['stash'];
+  //   $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm --force --recursive $stash");
+  // }
 
   $rsync_stash_to_local = FALSE;
 
