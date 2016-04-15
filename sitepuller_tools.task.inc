@@ -47,39 +47,6 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     mkdir($script_dir, 0700, true);
   }
 
-  // make a script to move the database from the remote site to the local site
-  $db_move_script_path = _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subsite, $temp_dir);
-  dsm($db_move_script_path, 'db move script');
-  return;
-
-  // write ini file
-  // $ini = _sitepuller_tools_script_init($local, $remote);
-  // $cmd[] = "source $ini";
-  // $cmd[] = "rm $ini";
-  // $cmd[] = 'echo $REMOTEDUMP';
-  // $cmd[] = 'echo $LOCALDBC';
-  // $cmd[] = "exit 0";
-
-  // delete old stash
-  // if ($form_state['values']['fresh_copy']) {
-  //   $stash = $remote['stash'];
-  //   $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm --force --recursive $stash");
-  // }
-
-  $rsync_stash_to_local = FALSE;
-
-  if ($rsync_stash_to_local) {
-    // // pull stash to local machine
-    // $cmd[] = "echo 'pulling stashed files to local machine'";
-    // $source = $remote['stash_dir'];
-    // $target = $local['stash_dir'];
-    // $cmd[] = _sitepuller_tools_make_dir($target);
-    // $user = $remote['user'];
-    // $host = $remote['host'];
-    // $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
-    // $cmd[] = "echo 'Stored files here: $target'";
-  }
-
   // pull drupal core
   if ($task['pull_drupal']) {
     $cmd[] = "echo 'pulling drupal core'";
