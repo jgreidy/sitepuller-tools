@@ -39,10 +39,10 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
 
   // generate name for temp directory
   $fodder = serialize(array(time(),$task,$local,$remote));
-  $temp_dir = hash("sha256", $fodder);
+  $temp_dir = 't.' . hash("sha256", $fodder);
 
   // make a local directory to write the scripts to
-  $script_dir = $local['temp'] . '/' . $temp_dir;
+  $script_dir = $local['tmp'] . '/' . $temp_dir;
   if (!is_dir($script_dir)) {
     mkdir($script_dir, 0700, true);
   }
