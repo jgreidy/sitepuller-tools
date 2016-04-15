@@ -287,7 +287,6 @@ function _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subs
 
   // remote db dump
   $remote_target_dir = implode('/', array($remote['tmp'], $temp_dir_name));
-  $cmd[] = "echo 'backing up remote db'"
   $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($remote_target_dir));
   $remote_db_sql = "$remote_target_dir/db.sql";
   $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "$dump_remote > $remote_db_sql");
@@ -295,14 +294,13 @@ function _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subs
   // copy remote db to local
   $cmd[] = "echo 'pulling stashed files to local machine'";
   $local_db_sql = implode('/', array($local['tmp'], $temp_dir_name, 'db.sql'));
-  $cmd[] = _sitepuller_tools_make_dir($target);
   $user = $remote['user'];
   $host = $remote['host'];
   $cmd[] = "rsync -acz -e ssh $user@$host:$remote_db_sql $local_db_sql";
-  $cmd[] = "echo 'Stored files here: $local_db_sql'";
+  //$cmd[] = "echo 'Stored files here: $local_db_sql'";
 
   // get rid of remote copy
-  $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm -rf $remote_target_dir")
+  $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm -rf $remote_target_dir");
 
   // replace local db with remote one
   $cmd[] = "echo 'restoring database'";
