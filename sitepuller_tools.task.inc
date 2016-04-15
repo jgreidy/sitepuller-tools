@@ -53,11 +53,11 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   return;
 
   // write ini file
-  $ini = _sitepuller_tools_script_init($local, $remote);
-  $cmd[] = "source $ini";
-  $cmd[] = "rm $ini";
-  $cmd[] = 'echo $REMOTEDUMP';
-  $cmd[] = 'echo $LOCALDBC';
+  // $ini = _sitepuller_tools_script_init($local, $remote);
+  // $cmd[] = "source $ini";
+  // $cmd[] = "rm $ini";
+  // $cmd[] = 'echo $REMOTEDUMP';
+  // $cmd[] = 'echo $LOCALDBC';
   // $cmd[] = "exit 0";
 
   // delete old stash
