@@ -111,7 +111,6 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
   if ($task['pull_database']) {
     // make a script to move the database from the remote site to the local site
     $db_move_script_path = _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subsite, $temp_dir);
-    drupal_set_message(t("$db_move_script_path db move script"));
     $cmd[] = "echo 'pulling database'";
     $cmd[] = "`which bash` $db_move_script_path";
     $cmd[] = "rm -f $db_move_script_path";
