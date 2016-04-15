@@ -68,31 +68,16 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
 
   $rsync_stash_to_local = FALSE;
 
-  // backup database on remote machine
-  if ($task['pull_database']) {
-    $rsync_stash_to_local = TRUE;
-    $cmd[] = "echo 'backing up database'";
-    // if(!function_exists('_sitepuller_tools_decrypt_string')) {
-    //   module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
-    // }
-    // $db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
-    // $mysqldump = _sitepuller_tools_mysqldump($db_connect);
-    $target_dir = implode('/', array($remote['stash_dir'], 'db'));
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
-    $target = "$target_dir/$remote_subsite.sql";
-    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "`echo ${REMOTEDUMP}` > $target");
-  }
-
   if ($rsync_stash_to_local) {
-    // pull stash to local machine
-    $cmd[] = "echo 'pulling stashed files to local machine'";
-    $source = $remote['stash_dir'];
-    $target = $local['stash_dir'];
-    $cmd[] = _sitepuller_tools_make_dir($target);
-    $user = $remote['user'];
-    $host = $remote['host'];
-    $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
-    $cmd[] = "echo 'Stored files here: $target'";
+    // // pull stash to local machine
+    // $cmd[] = "echo 'pulling stashed files to local machine'";
+    // $source = $remote['stash_dir'];
+    // $target = $local['stash_dir'];
+    // $cmd[] = _sitepuller_tools_make_dir($target);
+    // $user = $remote['user'];
+    // $host = $remote['host'];
+    // $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
+    // $cmd[] = "echo 'Stored files here: $target'";
   }
 
   // pull drupal core
@@ -153,6 +138,24 @@ function sitepuller_tools_script_task($task_nid, $form_state) {
     $host = $remote['host'];
     $cmd[] = "rsync -acz -e ssh $user@$host:$source/ $target/";
     $cmd[] = "echo 'Stored private files here: $target'";
+  }
+
+  $backup_script = _sitepuller_tools_backup_remote($local, $remote, $remote_subsite);
+  return;
+
+  // backup database on remote machine
+  if ($task['pull_database']) {
+    $rsync_stash_to_local = TRUE;
+    $cmd[] = "echo 'backing up database'";
+    // if(!function_exists('_sitepuller_tools_decrypt_string')) {
+    //   module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+    // }
+    // $db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
+    // $mysqldump = _sitepuller_tools_mysqldump($db_connect);
+    $target_dir = implode('/', array($remote['stash_dir'], 'db'));
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($target_dir));
+    $target = "$target_dir/$remote_subsite.sql";
+    $cmd[] = _sitepuller_tools_format_remote_cmd($remote, '`echo $REMOTEDUMP`'. " > $target");
   }
 
   // install database
@@ -336,6 +339,75 @@ function _sitepuller_tools_find_private_files_path($ssh, $site_path, $subsite_pa
   $cmd = "php -r 'echo realpath(\"$path\");'";
   $realpath = $ssh->exec($cmd);
   return $realpath;
+}
+
+/**
+ * write a script to back up remote database
+ * @return string path to script
+ */
+function _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subsite, $temp_dir_name) {
+  if(!function_exists('_sitepuller_tools_decrypt_string')) {
+    module_load_include('rules.inc', 'sitepuller_tools', $name = NULL);
+  }
+  $remote_db_connect = _sitepuller_tools_decrypt_string($remote['remote_db_connect']);
+  $dump_remote = _sitepuller_tools_mysqldump($remote_db_connect);
+
+  $cmd[] = '#!/bin/bash';
+
+  // remote db dump
+  $remote_target_dir = implode('/', array($remote['tmp'], $temp_dir_name));
+  $cmd[] = "echo 'backing up remote db'"
+  $cmd[] = _sitepuller_tools_format_remote_cmd($remote, _sitepuller_tools_make_dir($remote_target_dir));
+  $remote_db_sql = "$remote_target_dir/db.sql";
+  $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "$dump_remote > $remote_db_sql");
+
+  // copy remote db to local
+  $cmd[] = "echo 'pulling stashed files to local machine'";
+  $local_db_sql = implode('/', array($local['tmp'], $temp_dir_name, 'db.sql'));
+  $cmd[] = _sitepuller_tools_make_dir($target);
+  $user = $remote['user'];
+  $host = $remote['host'];
+  $cmd[] = "rsync -acz -e ssh $user@$host:$remote_db_sql $local_db_sql";
+  $cmd[] = "echo 'Stored files here: $local_db_sql'";
+
+  // get rid of remote copy
+  $cmd[] = _sitepuller_tools_format_remote_cmd($remote, "rm -rf $remote_target_dir")
+
+  // replace local db with remote one
+  $cmd[] = "echo 'restoring database'";
+  $subsite_root = $local['site_root'] . "/sites/$local_subsite";
+  $db_connect = _sitepuller_tools_decrypt_string($local['local_db_connect']);
+  $cmd[] = "cd $subsite_root";
+  $cmd[] = "drush sql-drop --yes";
+  $cmd[] = "$db_connect < $local_db_sql";
+  $cmd[] = "drush updatedb --cache-clear=1";
+
+  // delete the local db copy
+  $cmd[] =  "echo 'deleting local db dump'";
+  $cmd[] = "rm -rf $local_db_sql";
+
+  // set up file paths
+  $subsite_root = $local['site_root'] . "/sites/$local_subsite";
+  $public_files = "sites/$local_subsite/files";
+  $private_files = "sites/$local_subsite/private/files";
+  $cmd[] = "cd $subsite_root";
+  // cover Drupal 6 file system
+  $cmd[] = "drush vset file_directory_path $public_files";
+  $cmd[] = "drush vset file_directory_temp /tmp";
+  // cover Drupal 7 file system
+  $cmd[] = "drush vset file_private_path $private_files";
+  $cmd[] = "drush vset file_public_path $public_files";
+  $cmd[] = "drush vset file_temporary_path /tmp";
+
+  $cmd[] = "drush cc all";
+
+  $local_target_dir = implode('/', array($local['tmp'], $temp_dir_name);
+
+  $text = implode(PHP_EOL, $cmd) . PHP_EOL;
+  $file = "$local_target_dir/dbdump.sh";
+  file_put_contents($file, $text);
+  chmod($file, 0700);
+  return $file;
 }
 
 
