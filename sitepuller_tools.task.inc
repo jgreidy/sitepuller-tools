@@ -330,7 +330,7 @@ function _sitepuller_tools_db_move($local, $remote, $remote_subsite, $local_subs
 
   $cmd[] = "drush cc all";
 
-  $local_target_dir = implode('/', array($local['tmp'], $temp_dir_name);
+  $local_target_dir = implode('/', array($local['tmp'], $temp_dir_name));
 
   $text = implode(PHP_EOL, $cmd) . PHP_EOL;
   $file = "$local_target_dir/dbdump.sh";
